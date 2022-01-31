@@ -77,10 +77,14 @@
          call MPI_Ssend(send_buf, count, MPI_REAL, next, tag, &
       &                  comm, ierr)
 !
+        call MPI_Iprobe(MPI_ANY_SOURCE, tag, &
+      &                      comm, flag, status, ierr)
+         call MTestBeginExcludeFromTrace()
          do while (.not. flag)
             call MPI_Iprobe(MPI_ANY_SOURCE, tag, &
       &                      comm, flag, status, ierr)
          end do
+         call MTestEndExcludeFromTrace()
 !
          if (status(MPI_SOURCE) .ne. next) then
             print *, 'Ssend: Incorrect source, expected', next, &

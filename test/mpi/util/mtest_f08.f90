@@ -146,3 +146,15 @@
             endif
         endif
         end
+
+!       Mark the BEGINNING of a region in the trace file which is ignored in comparisons.
+!       The routine itself does nothing, but corresponding events are written into the
+!       trace, which serve as instructions to the filter-otf2-print.pl script
+        subroutine MTestBeginExcludeFromTrace()
+        end subroutine
+
+!       Mark the END of a region in the trace file which is ignored in comparisons.
+!       The routine itself does nothing, but corresponding events are written into the
+!       trace, which serve as instructions to the filter-otf2-print.pl script
+        subroutine MTestEndExcludeFromTrace()
+        end subroutine

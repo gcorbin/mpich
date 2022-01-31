@@ -154,3 +154,16 @@ C       No attribute associated with key MPI_UNIVERSE_SIZE of MPI_COMM_WORLD
             endif
         endif
         end
+
+
+C       Mark the BEGINNING of a region in the trace file which is ignored in comparisons.
+C       The routine itself does nothing, but corresponding events are written into the
+C       trace, which serve as instructions to the filter-otf2-print.pl script
+        subroutine MTestBeginExcludeFromTrace()
+        end subroutine
+
+C       Mark the END of a region in the trace file which is ignored in comparisons.
+C       The routine itself does nothing, but corresponding events are written into the
+C       trace, which serve as instructions to the filter-otf2-print.pl script
+        subroutine MTestEndExcludeFromTrace()
+        end subroutine

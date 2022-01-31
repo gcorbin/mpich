@@ -1336,3 +1336,18 @@ int MTestSpawnPossible(int *can_spawn)
     }
     return errs;
 }
+
+
+/*Mark the BEGINNING of a region in the trace file which is ignored in comparisons.
+The routine itself does nothing, but corresponding events are written into the
+trace, which serve as instructions to the filter-otf2-print.pl script*/
+void MTestBeginExcludeFromTrace()
+{
+}
+
+/*Mark the END of a region in the trace file which is ignored in comparisons.
+The routine itself does nothing, but corresponding events are written into the
+trace, which serve as instructions to the filter-otf2-print.pl script*/
+void MTestEndExcludeFromTrace()
+{
+}

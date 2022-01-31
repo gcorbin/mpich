@@ -59,6 +59,12 @@ void MTestCommRandomize(void);
 
 int MTestSpawnPossible(int *);
 
+/*Mark a region in the trace file which is ignored in comparisons.
+The routines itself do nothing, but corresponding events are written into the
+trace, which serve as instructions to the filter-otf2-print.pl script*/
+void MTestBeginExcludeFromTrace();
+void MTestEndExcludeFromTrace();
+
 #ifdef HAVE_MPI_WIN_CREATE
 int MTestGetWin(MPI_Win *, int);
 const char *MTestGetWinName(void);
