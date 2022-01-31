@@ -1,3 +1,60 @@
+MPICH Test Suite for the Score-P MPI wrapper
+============================================
+
+Goal: Use the MPICH test suite to test the MPI wrapper library in Score-P
+(https://www.vi-hps.org/projects/score-p).
+
+Score-P generates runtime measurements of parallel applications.
+Measurements for MPI routines are achieved by interposing a wrapper library
+between user code and MPI.
+
+We need to make sure that
+1. compiling MPI programs with scorep (i.e. linking against the wrapper library)
+does not intruduce errors into valid MPI programs
+2. the generated traces are correct.
+
+For 1. we only have to build the test suite with Score-P before running.
+For 2. we additionally need to
+    a. generate a trace while running the test program
+    b. compare the trace against a reference
+
+
+Building and running
+--------------------
+
+Extra prerequisites:
+* Score-P (https://www.vi-hps.org/projects/score-p)
+* OTF2 (also available at https://www.vi-hps.org/projects/score-p)
+    * The trace comparisons need the program 'otf2-print'
+
+Build:
+- First conifgure, make, make install the MPICH code itself.
+- Build Score-P with exactly this MPICH
+- configure this test suite to use the Score-P compiler wrappers (see configure-scorep-mpi-test.sh,
+this assumes that you have installed mpich and scorep as modules, alternatively just modify your PATH variable to fit your installation)
+
+Run:
+./runtests --tests=testlist.scorep --scorep_mode=traces
+
+Modes:
+- --scorep_mode=quiet: run the tests, profiling and tracing are disabled
+- --scorep_mode=profile: run the tests with only profiling enabled
+- --scorep_mode=trace: run the tests with only tracing enabled,
+if enabled in the testlist specification (via reference_trace=name) validate the generated trace against a stored reference
+(see the scripts in trace-validation/ for details)
+- --scorep_mode=generate_reference_traces: only tracing enabled;
+run only those tests for which a reference trace is specified in the testlist that does not exist yet.
+Create those traces.
+NOTE: no additional validation is performed for the references. For each new test, it should carefully be checked manually.
+NOTE: to update an existing reference trace, simply delete it before running with this option.
+
+
+Original README for the test suite below:
+
+|||||||||||||||||||||||||||||||||||||||||
+vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
+
 MPICH Test Suite
 
 This test suite is a *supplement* to other test suites, including the
