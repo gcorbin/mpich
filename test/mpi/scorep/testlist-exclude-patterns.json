@@ -1,0 +1,11 @@
+{
+    "exe-name": [],
+    "list-entry": [
+        "xfail=ticket\\d+"
+    ],
+    "source-name": [],
+    "source-contents": [
+        "(?i)Intercomm",
+        "(?i)MPI_Session"
+    ]
+}

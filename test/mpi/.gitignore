@@ -1,6 +1,9 @@
 scorep/trace-validation/*.pl
 *.tap
 scorep_last_run*/
+*.json
+!scorep/*.json
+testlist.filtered
 
 /aclocal.m4
 /attr/attr2type
