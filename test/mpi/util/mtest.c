@@ -328,6 +328,7 @@ int MTestGetIntracommGeneral(MPI_Comm * comm, int min_size, int allowSmaller)
                 break;
             case 5:
                 {
+#if SCOREP_SUPPORTS_INTERCOMM
                     /* Dup of the world using MPI_Intercomm_merge */
                     int rleader, isLeft;
                     MPI_Comm local_comm, inter_comm;
@@ -359,6 +360,9 @@ int MTestGetIntracommGeneral(MPI_Comm * comm, int min_size, int allowSmaller)
                     } else {
                         *comm = MPI_COMM_NULL;
                     }
+#else
+                    *comm = MPI_COMM_NULL;
+#endif
                 }
                 break;
             case 6:
@@ -520,6 +524,7 @@ const char *MTestGetIntracommName(void)
  */
 int MTestGetIntercomm(MPI_Comm * comm, int *isLeftGroup, int min_size)
 {
+#if SCOREP_SUPPORTS_INTERCOMM
     int size, rank, remsize, merr;
     int done = 0;
     MPI_Comm mcomm = MPI_COMM_NULL;
@@ -858,10 +863,15 @@ int MTestGetIntercomm(MPI_Comm * comm, int *isLeftGroup, int min_size)
     }
 
     return interCommIdx;
+#else
+    MTestError("Intercomms are not supported\n");
+    return 0;
+#endif
 }
 
 int MTestTestIntercomm(MPI_Comm comm)
 {
+#if SCOREP_SUPPORTS_INTERCOMM
     int local_size, remote_size, rank, **bufs, *bufmem, rbuf[2], j;
     int errs = 0, wrank, nsize;
     char commname[MPI_MAX_OBJECT_NAME + 1];
@@ -934,6 +944,10 @@ int MTestTestIntercomm(MPI_Comm comm)
     free(bufmem);
 
     return errs;
+#else
+    MTestError("Intercomms are not supported\n");
+    return 1;
+#endif
 }
 
 int MTestTestIntracomm(MPI_Comm comm)
@@ -995,6 +1009,7 @@ int MTestGetComm(MPI_Comm * comm, int min_size)
             getinter = 1;
         }
     }
+#if SCOREP_SUPPORTS_INTERCOMM
     if (getinter) {
         int isLeft;
         idx = MTestGetIntercomm(comm, &isLeft, min_size);
@@ -1002,6 +1017,7 @@ int MTestGetComm(MPI_Comm * comm, int min_size)
             getinter = 0;
         }
     }
+#endif
 
     return idx;
 }
