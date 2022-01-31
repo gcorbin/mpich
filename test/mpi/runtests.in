@@ -132,6 +132,8 @@ $depth = 0;              # This is used to manage multiple open list files
 
 # Options for the Score-P tests
 $scorep_mode = "quiet";
+$determine_mpi_coverage = 0;
+%mpi_coverage = ();
 
 # Paths for the Score-P functionality
 $scorep_filter_file="$program_dir/scorep/only-mtest.filter";
@@ -308,6 +310,9 @@ foreach $_ (@ARGV) {
             die "Invalid value for argument scorep_mode:  $scorep_mode. Set to one of 'quiet', 'profile', 'trace', 'generate_reference_traces'\n";
         }
     }
+    elsif (/--?coverage/) {
+        $determine_mpi_coverage = 1;
+    }
     else {
         print STDERR "Unrecognized argument $_\n";
         print STDERR "runtests [-tests=testfile] [-testdirs=dirs] [-np=nprocesses] \
@@ -316,7 +321,7 @@ foreach $_ (@ARGV) {
         [-timelimitarg=string] [-xmlfile=filename ] [-tapfile=filename ] \
         [-junitfile=filename ] [-noxmlclose] \
         [-verbose] [-showprogress] [-debug] [-batch] \
-        [-scorep_mode=mode]\n";
+        [-scorep_mode=mode] [-coverage]\n";
         exit(1);
     }
 }
@@ -341,6 +346,16 @@ if ( $scorep_mode ne "quiet" && $batchRun ) {
     exit(1);
 }
 
+if ( $determine_mpi_coverage and $scorep_mode ne "trace" )
+{
+    $determine_mpi_coverage = 0;
+    print STDERR "The -coverage flag does not have any effect outside -scorep_mode=trace\n"
+}
+
+if ($determine_mpi_coverage)
+{
+    open( COVERAGEOUT, ">mpi_coverage" ) || die "Cannot open mpi_coverage\n";
+}
 
 #
 # Process any files
@@ -406,6 +421,16 @@ if ($junitoutput) {
     move("$junitfile.new","$junitfile");
 }
 
+if ($determine_mpi_coverage)
+{
+    print COVERAGEOUT "MPI_routine #occurences\n";
+    print COVERAGEOUT "-----------------------\n";
+    foreach my $key (sort(keys %mpi_coverage))
+    {
+        print COVERAGEOUT "$key $mpi_coverage{$key}\n";
+    }
+    close COVERAGEOUT;
+}
 
 
 # Output a summary:
@@ -428,6 +453,9 @@ else {
     }
     if ($junitoutput) {
         print "JUNIT formatted results in $junitfullfile\n";
+    }
+    if ($determine_mpi_coverage) {
+        print "MPI coverage summary in mpi_coverage\n";
     }
 }
 #
@@ -1056,6 +1084,17 @@ sub RunMPIProgram {
         }
     }
 
+    # Update the set of all MPI functions we encountered in the traces
+    if ($determine_mpi_coverage and $scorep_mode eq "trace")
+    {
+        my $ok = UpdateMPICoverage(\%mpi_coverage, "scorep_last_run/traces.otf2");
+        if (not $ok)
+        {
+            goto TEST_FAILED;
+        }
+    }
+
+
     # If we made it to this line, all is good
     &RunTestPassed( $programname, $np, $test_opt, $curdir, $runtime );
     &RunPostMsg( $programname, $np, $test_opt, $curdir );
@@ -1066,6 +1105,38 @@ TEST_FAILED:
     &RunTestFailed( $programname, $np, $test_opt, $timeout, $curdir, $inline, $runtime );
     &RunPostMsg( $programname, $np, $test_opt, $curdir );
     return;
+}
+
+sub UpdateMPICoverage {
+    my ($coverage, $tracefile) = @_;
+
+    open( OTF2PRINT, "-|", "otf2-print $tracefile" );
+    my %local_coverage;
+    while (my $line = <OTF2PRINT>)
+    {
+        chomp($line);
+        # ENTER location timestamp Region:"MPI_xxx" <tag>
+        if ($line =~ /^ENTER\s+\d+\s+\d+\s+Region:\s+"MPI_([a-zA-Z_]+)"\s+<\d+>$/)
+        {
+            my $key = "MPI_$1";
+            $local_coverage{$key} = 0 if (not exists($local_coverage{$key}));
+            $local_coverage{$key} = $local_coverage{$key} + 1;
+        }
+    }
+    my $ok = close(OTF2PRINT);
+
+    unless ($ok and $? == 0)
+    {
+        print STDERR "Could not read MPI coverage from $tracefile\n";
+        return 0;
+    }
+
+    foreach my $key (keys %local_coverage)
+    {
+        $coverage->{$key} = 0 if (not exists($coverage->{$key}));
+        $coverage->{$key} = $coverage->{$key} + $local_coverage{$key};
+    }
+    return 1;
 }
 
 
