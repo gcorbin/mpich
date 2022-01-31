@@ -1,4 +1,5 @@
-
+*.tap
+scorep_last_run*/
 
 /aclocal.m4
 /attr/attr2type

@@ -1,0 +1,36 @@
+#!/bin/bash
+# This is a wrapper around the scorep compiler wrapper.
+# It disables all instrumentation except MPI and then forwards its argument to the appropriate scorep compiler wrapper.
+#
+# To create a wrapper for a specific scorep wrapper (e.g. scorep-gcc), one only needs
+# to create a symbolic link to this script with an appropriate name (e.g. scorep-mpi-only-gcc).
+#
+# Example:
+# > ln -s scorep-mpi-only-wrapper scorep-mpi-only-gcc
+# Then
+# > ./scorep-mpi-only-gcc
+# will call scorep-gcc and simply forward all arguments.
+#
+# Note: scorep-gcc itself is also a wrapper that will call gcc eventually. It works by the same mechanism (i.e. is a scorep-gcc is a symbolic link to scorep-wrapper).
+#
+# This means that with scorep-mpi-only-mpicc, we have achieved 3 layers of wrappers. Yay!?
+
+
+# 0-th argument is the name of this program (including path)
+# Remove everything until the last / in this name,
+# i.e. get the program name without path.
+# e.g. /some/path/to/scorep-mpi-only-gcc -> scorep-mpi-only-gcc
+program_name=${0##*/}
+
+# Extract the compiler name
+# e.g. scorep-mpi-only-gcc -> gcc
+base_compiler=${program_name##*scorep-mpi-only-}
+
+# Name of the scorep compiler wrapper
+# gcc -> scorep-gcc
+scorep_compiler="scorep-${base_compiler}"
+
+# Disable all instrumentation except MPI and compiler
+# And run the scorep compiler wrapper
+SCOREP_WRAPPER_INSTRUMENTER_FLAGS='--nocuda --noopencl --noopenacc --noopenmp --nopdt --nopomp --nouser' \
+exec ${scorep_compiler} "$@"

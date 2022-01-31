@@ -49,6 +49,17 @@ use Time::HiRes qw(gettimeofday tv_interval);
 # Import flock constants
 use Fcntl qw(:flock);
 
+use File::Spec qw(splitpath);
+use Cwd qw(abs_path);
+
+# Absolute path and file name of this script
+my $abs_program_path = abs_path(__FILE__);
+my $program_dir;
+my $program_name;
+($_, $program_dir, $program_name) = File::Spec->splitpath($abs_program_path);
+$program_dir = File::Spec->canonpath($program_dir);
+
+
 # Global variables
 our $g_opt = {};   # global options. TODO: migrate global option vars into the hash
 $g_opt->{memory_total} = 20;      # Total memory in GB
@@ -118,6 +129,13 @@ my $junitfullfile = '';
 $debug = 1;
 
 $depth = 0;              # This is used to manage multiple open list files
+
+# Options for the Score-P tests
+$scorep_mode = "quiet";
+
+# Paths for the Score-P functionality
+$scorep_filter_file="$program_dir/scorep/only-mtest.filter";
+
 
 # Build flags
 
@@ -283,6 +301,12 @@ foreach $_ (@ARGV) {
         $junitoutput = 1;
         open( JUNITOUT, ">$junitfile" ) || die "Cannot open $junitfile\n";
     }
+    elsif (/--?scorep_mode=(.*)/) {
+        $scorep_mode = $1;
+        if ($scorep_mode !~ m/(quiet|profile|trace|generate_reference_traces)/) {
+            die "Invalid value for argument scorep_mode:  $scorep_mode. Set to one of 'quiet', 'profile', 'trace', 'generate_reference_traces'\n";
+        }
+    }
     else {
         print STDERR "Unrecognized argument $_\n";
         print STDERR "runtests [-tests=testfile] [-testdirs=dirs] [-np=nprocesses] \
@@ -290,7 +314,8 @@ foreach $_ (@ARGV) {
         [-ppn=max-proc-per-node] [-ppnarg=string] \
         [-timelimitarg=string] [-xmlfile=filename ] [-tapfile=filename ] \
         [-junitfile=filename ] [-noxmlclose] \
-        [-verbose] [-showprogress] [-debug] [-batch]\n";
+        [-verbose] [-showprogress] [-debug] [-batch] \
+        [-scorep_mode=mode]\n";
         exit(1);
     }
 }
@@ -309,6 +334,12 @@ else {
         exit(1);
     }
 }
+
+if ( $scorep_mode ne "quiet" && $batchRun ) {
+    print STDERR "Score-P test functionality is currently not supported in batch mode";
+    exit(1);
+}
+
 
 #
 # Process any files
@@ -373,6 +404,8 @@ if ($junitoutput) {
     close $JUNITOUTNEW;
     move("$junitfile.new","$junitfile");
 }
+
+
 
 # Output a summary:
 if ($batchRun) {
@@ -492,6 +525,23 @@ sub RunList {
                 }
             }
 
+            push @{$test_opt->{envs}}, "SCOREP_OVERWRITE_EXPERIMENT_DIRECTORY=1";
+            push @{$test_opt->{envs}}, "SCOREP_EXPERIMENT_DIRECTORY=scorep_last_run";
+            push @{$test_opt->{envs}}, "SCOREP_FILTERING_FILE=$scorep_filter_file";
+
+            if ($scorep_mode eq "quiet") {
+                push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=false";
+                push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=false";
+            }
+            elsif ($scorep_mode eq "profile") {
+                push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=true";
+                push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=false";
+            }
+            else { # trace or generate_reference_traces
+                push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=false";
+                push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=true";
+            }
+
             my $programname = $args[0];
             my $np = "";
             my $requiresStrict = "";
@@ -578,6 +628,8 @@ sub RunList {
                 }
                 next;
             }
+
+
 
             if (-d $programname) {
                 # If a directory, go into the that directory and 
@@ -719,6 +771,11 @@ sub RunMPIProgram {
 
     unlink "err";
 
+    if ( -d "scorep_last_run" )
+    {
+        `rm -rf scorep_last_run`;
+    }
+
     # Set a default timeout on tests (3 minutes for now)
     my $timeout = $defaultTimeLimit;
     if (defined($test_opt->{timeLimit}) && $test_opt->{timeLimit} =~ /^\d+$/) {
@@ -795,6 +852,7 @@ sub RunMPIProgram {
             }
         }
     }
+
     my $start_time = gettimeofday();
     open ( MPIOUT, "$mpiexec $np_arg $np $extraArgs $mpiexecArgs $program_wrapper ./$programname $progArgs 2>&1 |" ) ||
         die "Could not run ./$programname\n";
@@ -817,6 +875,7 @@ sub RunMPIProgram {
         }
     }
     else {
+        #TODO: Refactor this into a resultTest action
         if ($verbose) {
             $inline = "$mpiexec $np_arg $np $extraArgs $mpiexecArgs $program_wrapper ./$programname\n";
         }
@@ -834,11 +893,20 @@ sub RunMPIProgram {
             elsif (/^srun: error: .*: signal: Communication connection failure/) {
                 # skip
             }
-            elsif (!/^\s*Test Passed\s*$/ && !/requesting checkpoint\s*$/ && !/checkpoint completed\s*$/) {
+            elsif (/^\s*Test Passed\s*$/ || /requesting checkpoint\s*$/ || /checkpoint completed\s*$/)
+            {
+                # skip
+            }
+            elsif (/^\s*\[Score-P\].*?Warning:\s+Calculated timer\s+\(.*?\)\s+frequencies differ from average frequency/
+                   || /^rank\[\d+\]:\s+frequency\s+=/)
+            {
+                #skip
+            }
+            else
+            {
                 print STDERR "Unexpected output in $programname: $_";
                 if (!$found_error) {
                     $found_error = 1;
-                    $err_count ++;
                 }
             }
         }
@@ -846,7 +914,6 @@ sub RunMPIProgram {
             print STDERR "Program $programname exited without No Errors\n";
             if (!$found_error) {
                 $found_error = 1;
-                $err_count ++;
             }
         }
         $rc = close ( MPIOUT );
@@ -865,7 +932,6 @@ sub RunMPIProgram {
                     print STDERR "Program $programname exited with signal $signal_num\n";
                 }
                 $found_error = 1;
-                $err_count ++;
             }
         }
     }
@@ -875,14 +941,36 @@ sub RunMPIProgram {
         relese_lock($lockfile);
     }
 
-    if ($found_error) {
-        &RunTestFailed( $programname, $np, $test_opt, $timeout, $curdir, $inline, $runtime );
+    # Error in execution
+    if ($found_error)
+    {
+        goto TEST_FAILED;
     }
-    else { 
-        &RunTestPassed( $programname, $np, $test_opt, $curdir, $runtime );
+
+    # Make sure that the profile or trace files exist
+    if ( $scorep_mode eq "profile" and not (-f "scorep_last_run/profile.cubex") )
+    {
+        print STDERR " Profile file does not exist for this test\n";
+        goto TEST_FAILED;
     }
+    if ( $scorep_mode =~ /(trace|generate_reference_traces)/ and not (-f "scorep_last_run/traces.otf2") )
+    {
+        print STDERR "Trace file does not exist for this test\n";
+        goto TEST_FAILED;
+    }
+
+    # If we made it to this line, all is good
+    &RunTestPassed( $programname, $np, $test_opt, $curdir, $runtime );
     &RunPostMsg( $programname, $np, $test_opt, $curdir );
+    return;
+
+TEST_FAILED:
+    $err_count++;
+    &RunTestFailed( $programname, $np, $test_opt, $timeout, $curdir, $inline, $runtime );
+    &RunPostMsg( $programname, $np, $test_opt, $curdir );
+    return;
 }
+
 
 # This version simply writes the mpiexec command out, with the output going
 # into a file, and recording the output status of the run.
