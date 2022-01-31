@@ -1,0 +1,238 @@
+#! @PERL@
+
+# Purpose: Compare two anonymized otf2-prints (see filter-otf2-print.pl) with diff
+
+
+use strict;
+use warnings;
+use File::Temp qw/ tempfile tempdir /;
+use File::Spec qw/ splitpath /;
+use Cwd 'abs_path';
+
+
+# Use same exit status codes as the diff program
+my $exit_same = 0;
+my $exit_diff = 1;
+my $exit_err  = 2;
+
+# Absolute path and file name of this script
+# We assume that the 'filter-otf2-print.pl' script is in the same folder as this script
+my $abs_program_path = abs_path(__FILE__);
+my $program_folder;
+my $program_name;
+($_, $program_folder, $program_name) = File::Spec->splitpath($abs_program_path);
+$program_folder = File::Spec->canonpath($program_folder);
+
+#---------------------------------------------------------------------------
+# Help and Description
+#---------------------------------------------------------------------------
+my $usage = "Usage:
+$program_name [--help|-h] trace1 trace2
+
+--help:                 Display help and exit";
+
+my $brief_description = "Compare two otf2 trace files by their anonymized printouts via diff.";
+
+my $description = "Compare two otf2 trace files such that
+traces from different runs of the same program should be considered equal.
+
+The program works like this:
+For each location:
+    - For both traces: Filter the output of otf2-print for this location through filter-otf2-print.pl
+    - Compare the filtered/anonymized otf2-printouts via diff
+
+The program should behave similar to diff, that is:
+    - No errors, no differences: no output, exit with 0
+    - No errors, found differences: output differences to STDOUT, exit with 1
+    - Errors: output errors to STDERR, exit with 2
+
+This is only supposed to work for traces generated from **pure** (no multithreading, e.g. OpenMP),
+**deterministic** ( no nonblocking wildcard receive or similar, e.g. Irecv(source=MPI_ANY_SOURCE, ...))
+MPI programs.
+Also, it is designed to work with traces that contain **only MPI events**, and otherwise may not work as expected.";
+
+sub display_short_help
+{
+    my $print_to = $_[0];
+    print $print_to "$usage\n";
+}
+
+sub display_help
+{
+    my $print_to = $_[0];
+    print $print_to "$program_name\n$usage\n$description\n"
+}
+
+
+#---------------------------------------------------------------------------
+# Validation of inputs
+#---------------------------------------------------------------------------
+sub check_trace_file
+{
+    my $filename = $_[0];
+    my $command = "otf2-print --silent $filename";
+    if ( not -f $_[0] )
+    {
+        print STDERR "The trace file $filename does not exist.\n";
+        exit($exit_err);
+    }
+
+    # Use system instead of open, because we are only interested in the exit status
+    system("$command 1>/dev/null");
+    my $rc = ($? >> 8);
+
+    if ( $rc != 0 )
+    {
+        print STDERR "The trace file $filename is not valid.\n";
+        print STDERR "$command exited with status $rc.\n";
+        exit($exit_err);
+    }
+}
+
+sub get_num_locations
+{
+    my $filename = $_[0];
+    my $command = "otf2-print --show-info $filename";
+    my $num_locations = 0;
+    open ( OTF2PRINT, "-|" , "$command" ) or exit($exit_err);
+    while (my $line = <OTF2PRINT>)
+    {
+        if ( $line =~ /^\s*Number of locations\s+(\d+)\s*$/ )
+        {
+            $num_locations = int($1);
+            last;
+        }
+    }
+    my $ok = close(OTF2PRINT);
+    if (!$ok and $! != 0)
+    {
+        print STDERR "Error in closing the pipe to $command: $!.\n";
+        exit($exit_err);
+    }
+    my $rc = ($? >> 8);
+    if ( $rc != 0 )
+    {
+        print STDERR "The trace file $filename is not valid.\n";
+        print STDERR "$command exited with status $rc.\n";
+        exit($exit_err);
+    }
+    if ( $num_locations == 0 )
+    {
+        print STDERR "Could not read the number of locations from the output of $command.\n;";
+        exit($exit_err);
+    }
+    return $num_locations;
+}
+
+############################################################################
+# Main program
+############################################################################
+
+#---------------------------------------------------------------------------
+# Process arguments
+#---------------------------------------------------------------------------
+my @positional_args = ();
+foreach $_ (@ARGV)
+{
+    # Is it a named optional argument?
+    if (/^--?/)
+    {
+        if (/--help/ or /-h/)
+        {
+            display_help(\*STDOUT);
+            exit($exit_same);
+        }
+        else
+        {
+            print STDERR "Unrecognized argument $_.\n";
+            display_short_help(\*STDERR);
+            exit($exit_err);
+        }
+    }
+    # Positional arguments
+    else
+    {
+        push(@positional_args, ($_,));
+    }
+}
+
+my $num_positional_args = scalar @positional_args;
+if ( $num_positional_args != 2 )
+{
+    print STDERR "Please provide exactly two files to diff.\n";
+    exit($exit_err);
+}
+my $trace1 = $positional_args[0];
+my $trace2 = $positional_args[1];
+
+#---------------------------------------------------------------------------
+# Compare the otf2-print of the two traces
+#---------------------------------------------------------------------------
+my $num_locations = 0;
+
+check_trace_file($trace1);
+check_trace_file($trace2);
+$num_locations = get_num_locations($trace1);
+if (get_num_locations($trace2) != $num_locations)
+{
+    print STDERR "Traces do not have the same number of locations.\n";
+    exit($exit_diff);
+}
+
+my $tmpdir = tempdir( CLEANUP => 1);
+
+my $found_difference = 0;
+my $filter_otf2 = File::Spec->catfile(($program_folder,), "filter-otf2-print.pl");
+
+for ( my $location = 0; $location < $num_locations; $location++ )
+{
+    my $tmp_print1 = File::Spec->catfile(($tmpdir,), "anonymized-otf2-print1");
+    my $tmp_print2 = File::Spec->catfile(($tmpdir,), "anonymized-otf2-print2");
+    system( "otf2-print -L $location $trace1 | $filter_otf2 --output=$tmp_print1" );
+    exit($exit_err) if ($? != 0);
+    system( "otf2-print -L $location $trace2 | $filter_otf2 --output=$tmp_print2" );
+    exit($exit_err) if ($? != 0);
+    system("diff --ignore-tab-expansion --ignore-trailing-space --ignore-space-change --ignore-blank-lines $tmp_print1 $tmp_print2");
+    my $current_diff_status = ($? >> 8);
+
+    if ( $current_diff_status == $exit_same )
+    {
+        # No difference: nothing to do
+    }
+    elsif ( $current_diff_status == $exit_diff )
+    {   print STDOUT "
+<<<<<<<<<< Preceding differences in location $location.
+-----------------------------------------------------------\n";
+        $found_difference = 1;
+    } else
+    {
+        print STDERR "
+<<<<<<<<<< Preceding error (error code $current_diff_status) in location $location.
+-----------------------------------------------------------\n";
+        exit($exit_err);
+    }
+
+}
+
+if( $found_difference )
+{
+    exit( $exit_diff );
+}
+
+exit( $exit_same );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

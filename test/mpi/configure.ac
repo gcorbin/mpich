@@ -1702,6 +1702,7 @@ AC_CONFIG_COMMANDS([chmod],[
     chmod a+x runtests checktests
     chmod a+x manual/manyconnect
     chmod a+x impls/hydra/proc_binding.sh
+    chmod a+x scorep/trace-validation/filter-otf2-print.pl scorep/trace-validation/diff-otf2.pl
 ])
 dnl Note that this format for AC_OUTPUT can cause problems for autoconf
 dnl run under cygwin
@@ -1709,6 +1710,8 @@ AC_OUTPUT(maint/testmerge \
           runtests \
           checktests \
           Makefile \
+          scorep/trace-validation/filter-otf2-print.pl \
+          scorep/trace-validation/diff-otf2.pl \
           basic/Makefile \
           attr/Makefile \
           attr/testlist \

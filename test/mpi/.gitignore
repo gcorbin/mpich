@@ -1,3 +1,4 @@
+scorep/trace-validation/*.pl
 *.tap
 scorep_last_run*/
 

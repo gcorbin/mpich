@@ -135,6 +135,7 @@ $scorep_mode = "quiet";
 
 # Paths for the Score-P functionality
 $scorep_filter_file="$program_dir/scorep/only-mtest.filter";
+$otf2_diff="$program_dir/scorep/trace-validation/diff-otf2.pl";
 
 
 # Build flags
@@ -571,6 +572,9 @@ sub RunList {
                     elsif ($key eq "mpix") {
                         $requiresMPIX = $value
                     }
+                    elsif ($key eq "reference_trace") {
+                        $test_opt->{reference_trace} = $value
+                    }
                     else {
                         print STDERR "Unrecognized key $key in $listfileSource\n";
                     }
@@ -630,6 +634,50 @@ sub RunList {
             }
 
 
+            # Conditions for skipping tests in context of different scorep_mode
+            unless (-d $programname)
+            {
+
+                my $has_reference_trace = 0;
+                if (defined $test_opt->{resultTest} and defined $test_opt->{reference_trace})
+                {
+                    SkippedTest($programname, $np, $test_opt, $curdir, "reference_trace is not allowed in combination with the resultTest option.");
+                    next;
+                }
+
+                if (defined $test_opt->{reference_trace})
+                {
+                    my $reference_trace = $test_opt->{reference_trace};
+                    if ($reference_trace !~ m/^[a-zA-Z0-9_\-.]+$/ )
+                    {
+                        SkippedTest($programname, $np, $test_opt, $curdir, "The name of the reference trace '$reference_trace ' is invalid: It should only contain alphanumeric characters, '_', '-', and '.'");
+                        next;
+                    }
+
+                    if (-d $reference_trace && -f "$reference_trace/traces.otf2")
+                    {
+                        $has_reference_trace = 1;
+                    }
+
+                    if ($scorep_mode eq "trace" && !$has_reference_trace)
+                    {
+                        SkippedTest($programname, $np, $test_opt, $curdir, "Could not find the specified reference trace $reference_trace");
+                        next;
+                    }
+                }
+
+                if ($scorep_mode eq "generate_reference_traces" && $has_reference_trace )
+                {
+                        SkippedTest($programname, $np, $test_opt, $curdir, "Generating missing traces: this test already has a reference trace");
+                        next;
+                }
+
+                if ($scorep_mode eq "generate_reference_traces" && !defined $test_opt->{reference_trace})
+                {
+                    SkippedTest($programname, $np, $test_opt, $curdir, "Generating missing traces: this test does not need a reference trace");
+                    next;
+                }
+            }
 
             if (-d $programname) {
                 # If a directory, go into the that directory and 
@@ -957,6 +1005,55 @@ sub RunMPIProgram {
     {
         print STDERR "Trace file does not exist for this test\n";
         goto TEST_FAILED;
+    }
+
+    if (defined $test_opt->{reference_trace})
+    {
+        my $reference_trace = $test_opt->{reference_trace};
+        if ($scorep_mode eq "trace")
+        {
+            print STDOUT "Validating 'scorep_last_run' against '$reference_trace'\n" if $verbose;
+            system( "$otf2_diff scorep_last_run/traces.otf2 $reference_trace/traces.otf2 1>$reference_trace.diff" );
+            my $rc = ($? >> 8);
+
+            if ($rc == 0)
+            {
+                # All good
+                # We do not need the diff file since it is empty in this case
+                unlink "$reference_trace.diff";
+            }
+            elsif ($rc == 1)
+            {
+                print STDERR "The trace of this test differs from its reference '$reference_trace'. Differences are listed in $reference_trace.diff\n";
+                goto TEST_FAILED;
+            }
+            else # error
+            {
+                print STDERR "There was an error in the comparison of traces: $rc\n";
+                goto TEST_FAILED;
+            }
+        }
+        elsif ($scorep_mode eq "generate_reference_traces")
+        {
+            if (-d $reference_trace)
+            {
+                system( "rm -rf $reference_trace" );
+                my $rc = ($? >> 8);
+                if ($rc != 0)
+                {
+                    print STDERR "Could not delete the old reference trace $reference_trace: rm exited with status $rc\n";
+                    goto TEST_FAILED;
+                }
+            }
+            system ( "cp -r scorep_last_run $reference_trace" );
+            my $rc = ($? >> 8);
+            if ($rc != 0)
+            {
+                print STDERR "Failed to generate the new reference trace. cp exited with status $rc\n";
+                goto TEST_FAILED;
+            }
+            print STDOUT "Generated reference trace $reference_trace\n" if $verbose;
+        }
     }
 
     # If we made it to this line, all is good

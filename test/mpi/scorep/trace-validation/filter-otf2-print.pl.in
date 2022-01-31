@@ -1,0 +1,176 @@
+#! @PERL@
+
+# Purpose: Remove any information from the output of otf2-print
+# that is subject to change between traces for different runs of the same program
+# This includes time-stamps, the absolute path of the program and numbers defined in the OTF2 header
+
+use strict;
+use warnings;
+
+my $exit_ok   = 0;
+my $exit_err  = 1;
+
+
+#---------------------------------------------------------------------------
+# Help and Description
+#---------------------------------------------------------------------------
+
+sub display_help_message
+{
+    my $print_to = $_[0];
+    print $print_to "
+otf2-print-anonymous:
+Remove any information from the output of otf2-print
+that is subject to change between traces for different runs of the same program.
+This includes time-stamps, Score-P region ids, paths, ...
+
+Usage:
+otf2-print-anonymous [--help|-h] [--input=<input-file>] [--output=<output-file>] \
+
+--help:                 Display this help and exit
+--input=<input-file>:   Read input from <input-file>. Read from STDIN if omitted.
+--output=<output-file>: Write output to <output-file>. Write to STDOUT if omitted.\n";
+
+}
+
+
+#---------------------------------------------------------------------------
+# Process arguments
+#---------------------------------------------------------------------------
+my $read_from_stdin = 1;
+my $write_to_std_out = 1;
+my $input_file = "";
+my $output_file = "";
+
+foreach $_ (@ARGV)
+{
+    if (/--help/ or /-h/)
+    {
+        display_help_message(\*STDOUT);
+        exit($exit_ok);
+    }
+    elsif (/--input=(.*)/)
+    {
+        $read_from_stdin = 0;
+        $input_file = $1;
+    }
+    elsif (/--output=(.*)/)
+    {
+        $write_to_std_out = 0;
+        $output_file = $1;
+    }
+    else
+    {
+        print STDERR "Unrecognized argument $_\n";
+        display_help_message(\*STDERR);
+        exit($exit_err);
+    }
+}
+
+# Set input and output stream
+my $input_stream;
+my $output_stream;
+
+if( $read_from_stdin )
+{
+    $input_stream = \*STDIN;
+}
+elsif ( -f $input_file )
+{
+   open($input_stream, "<", $input_file) or die "Cannot open input file $input_file. $!" ;
+}
+else
+{
+    die "Input file does not exist.";
+}
+
+if( $write_to_std_out )
+{
+    $output_stream = \*STDOUT;
+}
+else
+{
+   open($output_stream, ">", $output_file) or die "Cannot open output file $output_file file. $!" ;
+}
+
+
+#---------------------------------------------------------------------------
+# Process the input file
+#---------------------------------------------------------------------------
+my @otf2_header = (
+"",
+"=== OTF2-PRINT ===",
+"=== Events =====================================================================",
+"Event                               Location            Timestamp  Attributes",
+"--------------------------------------------------------------------------------",
+);
+my $num_header_lines = @otf2_header;
+
+my $line_number = 0;
+my $exclude_region = 0;
+while( my $line = <$input_stream> )
+{
+    chomp($line);
+    # The first few lines are a header
+    # Check line by line if the input matches our expectations
+    if ( $line_number < $num_header_lines and not ($line =~ m/^$otf2_header[$line_number]$/) )
+    {
+        print STDERR "Invalid OTF2 header.
+Expected '$otf2_header[$line_number]',
+got '$line'\n";
+        exit($exit_err);
+    }
+
+
+    # Look for lines of the form
+    # Event Location Timestamp Attributes
+    my $time_stamp = "                  xxx";
+    # $1: Event
+    # $2: Whitespace + Location
+    # $3: Whitespace + Timestamp
+    # $4: Rest of the line
+    #                                    $1   $2      $3      $4
+    my $num_replacements = ( $line =~ s/^(\w+)(\s+\d+)(\s+\d+)(\s+.*)$/$1$2$time_stamp$4/ );
+    if ( $num_replacements == 1 )
+    {
+        my $event=$1;
+        my $rest=$4;
+        if ( $event eq 'PROGRAM_BEGIN' )
+        {
+            $line =~ s/Name:\s*".*"/Name: "xxx"/;
+        }
+        elsif ($event eq 'ENTER' and $rest =~ /\s*Region:\s+"MTestBeginExcludeFromTrace"/i)
+        {
+            $exclude_region=1;
+            next;
+        }
+        elsif ($event eq 'LEAVE' and $rest =~ /\s*Region:\s+"MTestEndExcludeFromTrace"/i)
+        {
+            $exclude_region=0;
+            # Also exclude this line:
+            next;
+        }
+
+    }
+    else
+    { # Some lines may not follow the format
+        # Remove the last number in the parentheses in lines such as:  ADDITIONAL_ATTRIBUTES: (...., number)
+        $line =~ s/^(\s*ADDITIONAL ATTRIBUTES:\s+\(.*?)\d+\)\s*$/$1xxx)/;
+    }
+
+    if ($exclude_region)
+    {
+        next;
+    }
+
+    # Anonymize all OTF2 defined numbers that are enclosed in angle brackets
+    $line =~ s/(<\d+>)/<xxx>/g;
+
+    print $output_stream "$line\n";
+    $line_number = $line_number + 1;
+}
+
+close( $input_stream ) or warn "Close failed: $!";
+close( $output_stream ) or warn "Close failed: $!";
+
+exit($exit_ok);
