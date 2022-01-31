@@ -82,6 +82,16 @@ while ($file = readdir(DIR)) {
 			     "$outdir/${name}90.${ext}90.new" );
 	$filelist[$#filelist+1] = $file;
     }
+    # Copy reference traces
+    elsif ( $file =~ /^ref_/ and -d "$indir/$file" )
+    {
+        system( "cp -r $indir/$file $outdir/$file" );
+        my $rc = $? >> 8;
+        if ($rc)
+        {
+            die "The command 'cp -r $indir/$file $outdir/$file' failed with status $rc.\n";
+        }
+    }
 }
 closedir( DIR );
 
@@ -116,6 +126,14 @@ if (-s "$indir/testlist" || -s "$indir/testlist.in") {
 	&AppendFile( "$outdir/testlist.ap", "$outdir/$filename.new" );
     }
     &ReplaceIfDifferent( "$outdir/$filename", "$outdir/$filename.new" );
+}
+
+# Convert the testlist.scorep file
+# No .in version of this exists
+if (-s "$indir/testlist.scorep")
+{
+    &ConvertTestlist( $indir, $outdir, "testlist.scorep" );
+    &ReplaceIfDifferent( "$outdir/testlist.scorep", "$outdir/testlist.scorep.new" );
 }
 
 exit 0;

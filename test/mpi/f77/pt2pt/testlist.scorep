@@ -1,0 +1,22 @@
+# statusesf 1
+# greqf 1
+
+sendf 2 reference_trace=ref_sendf_2
+rsendf 2 reference_trace=ref_rsendf_2
+ssendf 2 reference_trace=ref_ssendf_2
+isendf 2 reference_trace=ref_isendf_2
+
+# irsendf 2
+# issendf 2
+
+psendf 2 reference_trace=ref_psendf_2
+
+# Would need to exluce the MPI_Waitsome and MPI_Testany
+# functions from the trace
+# prsendf 2
+
+# pssendf 2
+
+sendrecvf 2 reference_trace=ref_sendrecvf_2
+sendrecvreplf 2 reference_trace=ref_sendrecvreplf_2
+mprobef 2 reference_trace=ref_mprobef_2
