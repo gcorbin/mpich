@@ -328,6 +328,7 @@ foreach $_ (@ARGV) {
 
 # Perform any post argument processing
 if ($batchRun) {
+    $batrundir = abs_path($batrundir);
     if (! -d $batrundir) {
         mkpath $batrundir || die "Could not create $batrundir\n";
     }
