@@ -134,6 +134,7 @@ $depth = 0;              # This is used to manage multiple open list files
 $scorep_mode = "quiet";
 $determine_mpi_coverage = 0;
 %mpi_coverage = ();
+$batchHeaderFile = "";
 
 # Paths for the Score-P functionality
 $scorep_filter_file="$program_dir/scorep/only-mtest.filter";
@@ -244,6 +245,7 @@ foreach $_ (@ARGV) {
     elsif (/--?showprogress/) { $showProgress = 1; }
     elsif (/--?debug/) { $debug = 1; }
     elsif (/--?batchdir=(.*)/) { $batrundir = $1; }
+    elsif (/--?batchheader=(.*)/) { $batchHeaderFile = $1; }
     elsif (/--?batch/) { $batchRun = 1; }
     elsif (/--?timeoutarg=(.*)/) { $timeoutArgPattern = $1; }
     elsif (/--?xmlfile=(.*)/) {
@@ -333,6 +335,19 @@ if ($batchRun) {
         mkpath $batrundir || die "Could not create $batrundir\n";
     }
     open( BATOUT, ">$batrundir/runtests.batch" ) || die "Could not open $batrundir/runtests.batch\n";
+    if ($batchHeaderFile ne "")
+    {
+        if (! -f $batchHeaderFile) {
+            print STDERR "The header file $batchHeaderFile does not exist.\n";
+            exit(1);
+        }
+        open( BATHEADER, "<$batchHeaderFile" ) || die "Could not open $batchHeaderFile\n";
+        while (<BATHEADER>)
+        {
+            print BATOUT "$_";
+        }
+        close (BATHEADER );
+    }
 }
 else {
     # We must have mpiexec
@@ -340,11 +355,6 @@ else {
         print STDERR "No mpiexec found!\n";
         exit(1);
     }
-}
-
-if ( $scorep_mode ne "quiet" && $batchRun ) {
-    print STDERR "Score-P test functionality is currently not supported in batch mode";
-    exit(1);
 }
 
 if ( $determine_mpi_coverage and $scorep_mode ne "trace" )
@@ -1215,21 +1225,27 @@ sub AddMPIProgram {
     print STDOUT "$mpiexec $np_arg $np $extraArgs $program_wrapper ./$programname $progArgs\n" if $verbose;
     print STDOUT "." if $showProgress;
     # Save and restore the environment if necessary before running mpiexec.
-    if ($progEnv ne "") {
-        # Need to fix: 
-        # save_NAME_is_set=is old name set
-        # save_NAME=oldValue
-        # export NAME=newvalue
-        # (run) 
-        # export NAME=oldValue (if set!)
-        print STDERR "Batch output does not permit changes to environment\n";
-    }
+#     if ($progEnv ne "") {
+#         # Need to fix: 
+#         # save_NAME_is_set=is old name set
+#         # save_NAME=oldValue
+#         # export NAME=newvalue
+#         # (run) 
+#         # export NAME=oldValue (if set!)
+#         print STDERR "Batch output does not permit changes to environment\n";
+#     }
     # The approach here is to move the test codes to a single directory from
     # which they can be run; this avoids complex code to change directories
     # and ensure that the output goes "into the right place".
     $testCount++;
     rename $programname, "$batrundir/$programname";
     print BATOUT "echo \"# $mpiexec $np_arg $np $extraArgs $mpiexecArgs $program_wrapper $curdir/$programname $progArgs\" > runtests.$testCount.out\n";
+
+    print BATOUT "if [ -d 'scorep_last_run' ]; then rm -rf 'scorep_last_run'; fi\n";
+    if ($progEnv ne "")
+    {
+        print BATOUT "$progEnv \\\n";
+    }
     # Some programs expect to run in the same directory as the executable
     print BATOUT "$mpiexec $np_arg $np $extraArgs $mpiexecArgs $program_wrapper ./$programname $progArgs >> runtests.$testCount.out 2>&1\n";
     print BATOUT "echo \$? > runtests.$testCount.status\n";
