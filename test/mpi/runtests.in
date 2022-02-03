@@ -1238,7 +1238,13 @@ sub AddMPIProgram {
     # which they can be run; this avoids complex code to change directories
     # and ensure that the output goes "into the right place".
     $testCount++;
-    rename $programname, "$batrundir/$programname";
+    # To avoid conflict between same program names in different subdirectories, 
+    # prepend the executable name in the batch directory by the path to the current subdirectory 
+    # where the leading './' is removed and '/' is replaced by '-'.
+    my $programname_batch = "$curdir/$programname";
+    $programname_batch =~ s,^\./,,;
+    $programname_batch =~ s,/,-,g;
+    rename $programname, "$batrundir/$programname_batch";
     print BATOUT "echo \"# $mpiexec $np_arg $np $extraArgs $mpiexecArgs $program_wrapper $curdir/$programname $progArgs\" > runtests.$testCount.out\n";
 
     print BATOUT "if [ -d 'scorep_last_run' ]; then rm -rf 'scorep_last_run'; fi\n";
@@ -1247,7 +1253,7 @@ sub AddMPIProgram {
         print BATOUT "$progEnv \\\n";
     }
     # Some programs expect to run in the same directory as the executable
-    print BATOUT "$mpiexec $np_arg $np $extraArgs $mpiexecArgs $program_wrapper ./$programname $progArgs >> runtests.$testCount.out 2>&1\n";
+    print BATOUT "$mpiexec $np_arg $np $extraArgs $mpiexecArgs $program_wrapper ./$programname_batch $progArgs >> runtests.$testCount.out 2>&1\n";
     print BATOUT "echo \$? > runtests.$testCount.status\n";
 }
 
