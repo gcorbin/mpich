@@ -19,34 +19,127 @@ For 2. we additionally need to
     b. compare the trace against a reference
 
 
-Building and running
---------------------
-
 Extra prerequisites:
+--------------------
 * Score-P (https://www.vi-hps.org/projects/score-p)
 * OTF2 (also available at https://www.vi-hps.org/projects/score-p)
     * The trace comparisons need the program 'otf2-print'
 
-Build:
-- First conifgure, make, make install the MPICH code itself.
-- Build Score-P with exactly this MPICH
-- configure this test suite to use the Score-P compiler wrappers (see configure-scorep-mpi-test.sh,
-this assumes that you have installed mpich and scorep as modules, alternatively just modify your PATH variable to fit your installation)
+Preparation:
+------------
+1. First configure, make, make install the MPICH code itself.
+2. Build Score-P with exactly this MPICH
+3. Make the MPICH from 1. and the Score-P from 2. available in PATH (e.g. via modules)
+4. Configure this test suite to use the Score-P compiler wrappers: Use the script 'scorep/configure-for-scorep.sh'
 
-Run:
-./runtests --tests=testlist.scorep --scorep_mode=traces
+Now, the test suite should be ready to use.
 
-Modes:
-- --scorep_mode=quiet: run the tests, profiling and tracing are disabled
-- --scorep_mode=profile: run the tests with only profiling enabled
-- --scorep_mode=trace: run the tests with only tracing enabled,
-if enabled in the testlist specification (via reference_trace=name) validate the generated trace against a stored reference
-(see the scripts in trace-validation/ for details)
-- --scorep_mode=generate_reference_traces: only tracing enabled;
-run only those tests for which a reference trace is specified in the testlist that does not exist yet.
-Create those traces.
-NOTE: no additional validation is performed for the references. For each new test, it should carefully be checked manually.
-NOTE: to update an existing reference trace, simply delete it before running with this option.
+
+Extra options for runtests:
+---------------------------
+
+1. --scorep_mode=[quiet|profile|trace|generate_reference_traces]
+2. --coverage
+3. --batchheader=<filename>
+
+
+--scorep_mode: 
+Depending on the value of this option the environment variables SCOREP_ENABLE_PROFILING and SCOREP_ENABLE_TRACING are set for each test.
+quiet: Disable both profiling and tracing
+profile: Enable only profiling
+trace, generate_reference_traces: Enable only tracing
+
+The modes trace and generate_reference_traces also have the following behavior, when **not in batch mode** (i.e. runtests --batch)
+trace: 
+    See if the Score-P experiment directory contains a trace output 'traces.otf2'
+    If the test is given the option reference_trace=<name> in the testlist, then the resulting trace is compared against this reference (stored in the folder <name> in the same directory). 
+    This functionality calls the scripts in scorep/trace-validation 
+generate_reference_traces:
+    Run only those tests for which the option reference_trace=<name> is given and for which the reference does not exist yet (folder <name> does not exist in current directory).
+    For each successful test, generate the reference <name> by copying the experiment directory.
+    NOTE: No additional validation is performed for the references. For each new test, it should carefully be checked manually.
+    NOTE: To update an existing reference trace, simply delete it before running with this option.
+    
+The testlist.scorep lists specify a selection of tests for which this extended trace validation should be performed. Run:
+    ./runtests --tests=testlist.scorep --scorep_mode=traces
+
+
+--coverage:
+This option is only useful in combination with --scorep_mode=traces and the extended trace validation. 
+If given, the runtests script will output of all MPI functions that were encountered in the traces in an additional file.
+Useful to decide which references should be added to increase coverage.
+
+--batchheader:
+Only has effect in batch mode(i.e. when calling runtests --batch).
+Give the name of a text file whose contents are to be prepended on the batch script. 
+For example --batchheader=scorep/slurm-header.sh can be used to produce a valid slurm batch script (for use on the test cluster)
+
+
+
+Instructions for the test cluster:
+----------------------------------
+Steps to run the test suite in batch mode.
+
+# MPICH v4.0 is installed as a module already.
+module load GCC
+module load MPICH
+
+# Install Score-P locally as a user(configure it to use the loaded MPICH) and make it available via PATH (user modules are supported on the cluster, put module files in ~/.local)
+module load Scorep
+
+# Configure the test suite
+./scorep/configure-for-scorep.sh
+
+# Filter testlists
+# This creates files 'testlist.filtered' parallel to the existing 'testlist' files where tests with unsupported features (from Score-P point of view) are removed
+python3 scorep/generate_filtered_testlists.py -i testlist -o testlist.filtered -f scorep/testlist-exclude-patterns-swat.json
+
+
+# Create batch script
+# Explanation: 
+# Enable batch mode, put resulting test executables and the runtests.batch script into the './batch' folder, prepend scorep/slurm-header.sh to the runtests.batch script
+# Call tests with the 'srun' command and set a time limit on each individual job step via --time (runtests always counts in seconds, srun needs the format minutes:seconds to deal with seconds)
+# Read tests from the filtered testlists 'testlist.filtered' created in the previous step
+# Enable tracing
+# Output test results into 'filtered.tap'.
+#
+# In batch mode, the TAP file lists only the *skipped* tests and those for which the *compilation failed*.
+# It also gives the total number of tests. This total should be the same as reported by the scorep/generate_reference_traces script earlier
+./runtests \
+--batch \
+--batchdir=./batch \
+--batchheader=scorep/slurm-header.sh \
+--mpiexec=srun \
+--timelimitarg=--time=00:%d \
+--tests=testlist.filtered \
+--scorep_mode=trace \
+--tapfile=filtered.tap
+
+# Evaluate results:
+cd batch
+../checktests > checktests.out
+# TODO: analysis of results
+
+
+Some additional files:
+----------------------
+
+Most additional files are inside the scorep/ folder. 
+
+scorep/compiler-wrappers: 
+These wrappers should be given to configure. They set compile-time options for Score-P when building the tests.
+
+scorep/trace-validation:
+Scripts to compare two otf2 traces via otf2-print and diff. The comparison should be indifferent to information changing between runs (such as time stamps). These scripts are called by 'runtests' in the 'scorep_mode=trace' mode when extended trace validation is enabled for a test.
+
+scorep/only-mtest.filter: 
+Score-P filter file to reduce the size of resulting traces to a minimum. Only MTest calls are recorded to provide some structure in the trace files
+
+scorep/testlist-exclude-patterns.json: 
+Used by scorep/generate_filtered_testlists.py to determine which tests to exclude. 
+
+
+
 
 
 Original README for the test suite below:
