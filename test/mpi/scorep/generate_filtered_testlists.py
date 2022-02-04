@@ -38,6 +38,7 @@ import json
 
 from python_utils.read_sources_from_makefile import read_sources_from_makefile
 from python_utils.default_logger import set_default_logging_behavior
+from python_utils.strip_comments_from_json import strip_comments
 
 import logging
 logger = logging.getLogger(__name__)
@@ -149,8 +150,11 @@ if __name__ == '__main__':
             exclude_patterns = json.load(file)
     else:
         exclude_patterns = default_exclude_patterns
+
+    exclude_patterns = strip_comments(exclude_patterns)
     assert sorted(['exe-name', 'list-entry', 'source-name', 'source-contents']) == sorted(exclude_patterns.keys()),\
         "The loaded filter file is invalid"
+    logger.debug("Exclude patterns = %s", exclude_patterns)
 
     for dirpath, dirnames, filenames in os.walk('.', topdown=True):
         logger.info("Processing directory '%s'", dirpath)

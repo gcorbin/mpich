@@ -1,11 +1,23 @@
 {
-    "exe-name": [],
-    "list-entry": [
-        "xfail=ticket\\d+"
+    "$^ Notes:": [
+        "Strings starting with '$^' will be treated as comments.",
+        "Tests matching at least one of the criteria in one of the categories below will be excluded from the filtered testlist.",
+        "For each category, a list of regex patterns can be supplied as exclude criteria."
     ],
-    "source-name": [],
+    "exe-name": [
+        "$^ Match the path of the test executable relative to the top test directory against these patterns:"
+    ],
+    "list-entry": [
+        "$^ Match the entire line in the testlist against these patterns:",
+        "xfail=ticket\\d+", "$^ The xfail option is not honored by runtests if the --enable-strictmpi option was given to configure. These are tests that are expected to fail with MPICH.",
+        "resultTest=", "$^ Tests with the resultTest option are not supported in runtests --batch. Exclude them here to maintain consistent test counts."
+    ],
+    "source-name": [
+        "$^ Match the name of each source file of the test against these patterns:"
+    ],
     "source-contents": [
-        "(?i)Intercomm",
-        "(?i)MPI_Session"
+        "$^ Match each line of each source file of the test against these patterns",
+        "(?i)Intercomm", "$^ Score-P does not support MPI Intercomms in any way. This broad pattern will also exclude calls to MTest_Intercomm_xxx.",
+        "(?i)MPI_Session", "$^ Score-P does not support MPI_Session."
     ]
 }
