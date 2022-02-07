@@ -1,6 +1,6 @@
 iwriteatf 4
 iwritef   4
-iwriteshf 4
+iwriteshf 4 timeLimit=500
 writef    4
 writeatf  4
 writeallf 4
