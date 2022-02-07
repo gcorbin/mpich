@@ -3,7 +3,6 @@
 ## Copyright (C) by Argonne National Laboratory
 ##     See COPYRIGHT in top-level directory
 ##
-
 $debug   = 1;
 $verbose = 1;
 $ignoreBogusOutput = 0;
@@ -49,34 +48,43 @@ while (<RESULTS>) {
     if (-s $resultsFile) {
 	open (RFD, "<$resultsFile");
 	$runLine = <RFD>;
-	$sawNoerrors = 0;
+	my $sawNoerrors = 0;
+	my $error_in_output = 0;
 	# Successful output should contain ONLY the line No Errors
 	while (<RFD>) {
 	    chop;
-	    $outLine = $_;
-	    if ($outLine =~ /^\s+No [Ee]rrors\s*$/) {
-		$sawNoerrors = 1;
+	    # The 'No Errors' line should only be ONCE in the output
+	    if (/^\s+No [Ee]rrors\s*$/ && $sawNoerrors == 0) {
+            $sawNoerrors = 1;
+            next;
 	    }
-	    else {
 		# To filter out output that may be added to STDOUT
 		# by a badly behaved runtime system, you can either
 		# add a specific filter here (preferred) or set the
 		# -ignorebogus option (considered a workaround)
+        if (/^\s*\[Score-P\].*?Warning:\s+Calculated timer\s+\(.*?\)\s+frequencies differ from average frequency/
+            || /^rank\[\d+\]:\s+frequency\s+=/) {
+            next;
+        }
 		# The following is an example that accepts certain
 		# kinds of output once "No Errors" is seen.
-	        if ($sawNoerrors) {
-		    if ( /^Application [0-9]+ resources: utime .*/) {
-		        last;
-                    }
-                }
-	        if (!$ignoreBogusOutput) {
-		    # Any extraneous output is an error
-		    $sawNoerrors = 0;
-		}
-	    }
+        if ($sawNoerrors) {
+            if ( /^Application [0-9]+ resources: utime .*/) {
+                last;
+            }
+        }
+        # The line did not match any criterion above: It is considered erroneous output.
+        if (!$ignoreBogusOutput) {
+            # Any extraneous output is an error
+            $error_in_output = 1;
+        }
 	}
 	close (RFD);
-	if ($sawNoerrors == 1 && $testStatus == 0) {
+    # Test output without the 'No Errors' line is an error.
+	if ($sawNoerrors != 1) {
+        $error_in_output = 1;
+    }
+	if ($error_in_output == 0 && $testStatus == 0) {
 	    $testsPassed ++;
 	}
 	else {
