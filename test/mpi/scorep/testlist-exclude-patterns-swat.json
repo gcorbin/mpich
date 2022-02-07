@@ -5,12 +5,27 @@
         "For each category, a list of regex patterns can be supplied as exclude criteria."
     ],
     "exe-name": [
-        "$^ Match the path of the test executable relative to the top test directory against these patterns:"
+        "$^ Match the path of the test executable relative to the top test directory against these patterns:",
+        "$^ The following tests do produce errors even when run without Score-P",
+        "^./errors/coll/allgatherlength",
+        "^./errors/coll/allreducelength",
+        "^./errors/coll/alltoalllength",
+        "^./errors/coll/gatherlength",
+        "^./errors/coll/iallgatherlength",
+        "^./errors/coll/iallreducelength",
+        "^./errors/coll/igatherlength",
+        "^./errors/coll/ireducelength",
+        "^./errors/coll/ireduceop",
+        "^./errors/coll/iscatterlength",
+        "^./errors/coll/reducelength",
+        "^./errors/coll/reduceop",
+        "^./errors/coll/scatterlength"
     ],
     "list-entry": [
         "$^ Match the entire line in the testlist against these patterns:",
         "xfail=ticket\\d+", "$^ The xfail option is not honored by runtests if the --enable-strictmpi option was given to configure. These are tests that are expected to fail with MPICH.",
-        "resultTest=", "$^ Tests with the resultTest option are not supported in runtests --batch. Exclude them here to maintain consistent test counts."
+        "resultTest=", "$^ Tests with the resultTest option are not supported in runtests --batch. Exclude them here to maintain consistent test counts.",
+        "^darray_pack 72$", "$^ This test uses too many processes"
     ],
     "source-name": [
         "$^ Match the name of each source file of the test against these patterns:"
