@@ -4,7 +4,7 @@ iwriteshf 4 timeLimit=500
 writef    4
 writeatf  4
 writeallf 4
-writeshf  4
+writeshf  4 timeLimit=500
 writeordf 4
 writeatallf 4
 writeatallbef 4
