@@ -40,7 +40,9 @@ noinst_PROGRAMS =     \
     comm_idup_isend   \
     comm_idup_nb      \
     comm_idup_iallreduce \
+    comm_idup_iallreduce_only_intracomm \
     comm_idup_comm    \
+    comm_idup_comm_only_intracomm \
     comm_idup_comm2   \
     comm_create_group_idup \
     comm_info \

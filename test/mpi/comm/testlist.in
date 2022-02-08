@@ -35,9 +35,11 @@ comm_idup 9
 comm_idup_mul 2
 comm_idup_overlap 2
 comm_idup_iallreduce 6
+comm_idup_iallreduce_only_intracomm 6
 comm_idup_nb 6
 comm_idup_isend 6
 comm_idup_comm 6
+comm_idup_comm_only_intracomm 6
 comm_idup_comm2 6
 dup_with_info 2
 dup_with_info 4
