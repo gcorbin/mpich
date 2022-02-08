@@ -308,8 +308,8 @@ foreach $_ (@ARGV) {
     }
     elsif (/--?scorep_mode=(.*)/) {
         $scorep_mode = $1;
-        if ($scorep_mode !~ m/(quiet|profile|trace|generate_reference_traces)/) {
-            die "Invalid value for argument scorep_mode:  $scorep_mode. Set to one of 'quiet', 'profile', 'trace', 'generate_reference_traces'\n";
+        if ($scorep_mode !~ m/(off|quiet|profile|trace|generate_reference_traces)/) {
+            die "Invalid value for argument scorep_mode:  $scorep_mode. Set to one of 'off', 'quiet', 'profile', 'trace', 'generate_reference_traces'\n";
         }
     }
     elsif (/--?coverage/) {
@@ -565,21 +565,24 @@ sub RunList {
                 }
             }
 
-            push @{$test_opt->{envs}}, "SCOREP_OVERWRITE_EXPERIMENT_DIRECTORY=1";
-            push @{$test_opt->{envs}}, "SCOREP_EXPERIMENT_DIRECTORY=scorep_last_run";
-            push @{$test_opt->{envs}}, "SCOREP_FILTERING_FILE=$scorep_filter_file";
 
-            if ($scorep_mode eq "quiet") {
-                push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=false";
-                push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=false";
-            }
-            elsif ($scorep_mode eq "profile") {
-                push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=true";
-                push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=false";
-            }
-            else { # trace or generate_reference_traces
-                push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=false";
-                push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=true";
+            if ($scorep_mode ne "off") {
+                push @{$test_opt->{envs}}, "SCOREP_OVERWRITE_EXPERIMENT_DIRECTORY=1";
+                push @{$test_opt->{envs}}, "SCOREP_EXPERIMENT_DIRECTORY=scorep_last_run";
+                push @{$test_opt->{envs}}, "SCOREP_FILTERING_FILE=$scorep_filter_file";
+
+                if ($scorep_mode eq "quiet") {
+                    push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=false";
+                    push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=false";
+                }
+                elsif ($scorep_mode eq "profile") {
+                    push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=true";
+                    push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=false";
+                }
+                else { # trace or generate_reference_traces
+                    push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=false";
+                    push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=true";
+                }
             }
 
             my $programname = $args[0];
@@ -858,7 +861,7 @@ sub RunMPIProgram {
 
     unlink "err";
 
-    if ( -d "scorep_last_run" )
+    if ( $scorep_mode ne "off" && -d "scorep_last_run" )
     {
         `rm -rf scorep_last_run`;
     }
@@ -1247,7 +1250,9 @@ sub AddMPIProgram {
     rename $programname, "$batrundir/$programname_batch";
     print BATOUT "echo \"# $mpiexec $np_arg $np $extraArgs $mpiexecArgs $program_wrapper $curdir/$programname $progArgs\" > runtests.$testCount.out\n";
 
-    print BATOUT "if [ -d 'scorep_last_run' ]; then rm -rf 'scorep_last_run'; fi\n";
+    if ($scorep_mode ne "off") {
+        print BATOUT "if [ -d 'scorep_last_run' ]; then rm -rf 'scorep_last_run'; fi\n";
+    }
     if ($progEnv ne "")
     {
         print BATOUT "$progEnv \\\n";
