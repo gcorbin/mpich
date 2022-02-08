@@ -1,4 +1,4 @@
-groupcreate 4
+groupcreate 4 env=SCOREP_MPI_MAX_GROUPS=2049
 grouptest 8
 grouptest2 4
 groupnullincl 4
