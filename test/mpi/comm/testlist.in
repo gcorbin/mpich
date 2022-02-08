@@ -11,7 +11,7 @@ icsplit 8
 iccreate 8
 ctxalloc 2 timeLimit=300
 ctxsplit 4 timeLimit=300
-cmfree 4
+cmfree 4 env=SCOREP_MPI_MAX_COMMUNICATORS=1024
 cmfree2 2
 cmsplit 4
 cmsplit2 12
