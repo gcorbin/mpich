@@ -996,6 +996,10 @@ sub RunMPIProgram {
             {
                 #skip
             }
+            elsif ($curdir =~ /^\.\/errors/ && /^\s*\[Score-P\].*?(Warning|Error)/) 
+            {
+                # Ignore all Scorep Warnings and Errors for tests under ./errors/
+            }
             else
             {
                 print STDERR "Unexpected output in $programname: $_";
