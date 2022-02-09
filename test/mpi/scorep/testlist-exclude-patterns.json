@@ -5,7 +5,22 @@
         "For each category, a list of regex patterns can be supplied as exclude criteria."
     ],
     "exe-name": [
-        "$^ Match the path of the test executable relative to the top test directory against these patterns:"
+        "$^ Match the path of the test executable relative to the top test directory against these patterns:",
+        "$^ Tests in ./errors can be incorrect MPI programs.",
+        "$^ In some cases this results in critical errors in Score-P (e.g. invalid memory).",
+        "^./errors/comm/cfree",
+        "^./errors/comm/comm_create_group_nullarg",
+        "^./errors/comm/comm_create_nullarg",
+        "^./errors/comm/comm_split_nullarg",
+        "^./errors/comm/comm_split_type_nullarg",
+        "^./errors/group/group_difference_nullarg",
+        "^./errors/group/group_intersection_nullarg",
+        "^./errors/group/group_range_excl_nullarg",
+        "^./errors/group/group_range_incl_nullarg",
+        "^./errors/group/group_union_nullarg",
+        "^./errors/rma/win_sync_complete",
+        "^./errors/rma/win_sync_free_at",
+        "^./errors/rma/win_sync_free_pt"
     ],
     "list-entry": [
         "$^ Match the entire line in the testlist against these patterns:",
