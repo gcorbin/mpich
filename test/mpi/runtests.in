@@ -992,6 +992,10 @@ sub RunMPIProgram {
             {
                 #skip
             }
+            elsif (/^\s*\[Score-P\].*?Warning:\s*MPI environment initialization request and provided level exceed MPI_THREAD_FUNNELED!/)
+            {
+                #skip
+            }
             else
             {
                 print STDERR "Unexpected output in $programname: $_";

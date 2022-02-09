@@ -66,6 +66,10 @@ while (<RESULTS>) {
             || /^rank\[\d+\]:\s+frequency\s+=/) {
             next;
         }
+        if (/^\s*\[Score-P\].*?Warning:\s*MPI environment initialization request and provided level exceed MPI_THREAD_FUNNELED!/)
+        {
+            next;
+        }
 		# The following is an example that accepts certain
 		# kinds of output once "No Errors" is seen.
         if ($sawNoerrors) {
