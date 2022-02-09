@@ -2,9 +2,6 @@
 
 # Execute this script from the main directory of mpi test, i.e. test/mpi/
 
-module load mpich/4.0
-module load scorep/7.0
-
 wdir=`pwd`/scorep/compiler-wrappers
 
 SCOREP_WRAPPER=off \
