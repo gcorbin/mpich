@@ -38,7 +38,7 @@ Now, the test suite should be ready to use.
 Extra options for runtests:
 ---------------------------
 
-1. --scorep_mode=[quiet|profile|trace|generate_reference_traces]
+1. --scorep_mode=[off|quiet|profile|trace|generate_reference_traces]
 2. --coverage
 3. --batchheader=<filename>
 
@@ -48,6 +48,7 @@ Depending on the value of this option the environment variables SCOREP_ENABLE_PR
 quiet: Disable both profiling and tracing
 profile: Enable only profiling
 trace, generate_reference_traces: Enable only tracing
+off: Do not set any environment variables related to Score-P
 
 The modes trace and generate_reference_traces also have the following behavior, when **not in batch mode** (i.e. runtests --batch)
 trace: 
@@ -59,6 +60,8 @@ generate_reference_traces:
     For each successful test, generate the reference <name> by copying the experiment directory.
     NOTE: No additional validation is performed for the references. For each new test, it should carefully be checked manually.
     NOTE: To update an existing reference trace, simply delete it before running with this option.
+off: 
+    Disable all functionality that has been added to the runtests script for Score-P specifically. Use to run the test suite normally (configure accordingly)
     
 The testlist.scorep lists specify a selection of tests for which this extended trace validation should be performed. Run:
     ./runtests --tests=testlist.scorep --scorep_mode=traces
@@ -80,22 +83,25 @@ Instructions for the test cluster:
 ----------------------------------
 Steps to run the test suite in batch mode.
 
+# 1. Load modules
 # MPICH v4.0 is installed as a module already.
 module load GCC
 module load MPICH
 
-# Install Score-P locally as a user(configure it to use the loaded MPICH) and make it available via PATH (user modules are supported on the cluster, put module files in ~/.local)
+# 2. Install Score-P locally as a user(configure it to use the loaded MPICH) and make it available via PATH
+# If installed as a module (user modules are supported on the cluster, put module files in ~/.local), simply do
 module load Scorep
 
-# Configure the test suite
+# 3. Configure the test suite
+# This calls configure with the appropriate options
 ./scorep/configure-for-scorep.sh
 
-# Filter testlists
+# 4. Filter testlists
 # This creates files 'testlist.filtered' parallel to the existing 'testlist' files where tests with unsupported features (from Score-P point of view) are removed
 python3 scorep/generate_filtered_testlists.py -i testlist -o testlist.filtered -f scorep/testlist-exclude-patterns-swat.json
 
 
-# Create batch script
+# 5. Create a batch script
 # Explanation: 
 # Enable batch mode, put resulting test executables and the runtests.batch script into the './batch' folder, prepend scorep/slurm-header.sh to the runtests.batch script
 # Call tests with the 'srun' command and set a time limit on each individual job step via --time (runtests always counts in seconds, srun needs the format minutes:seconds to deal with seconds)
@@ -115,30 +121,59 @@ python3 scorep/generate_filtered_testlists.py -i testlist -o testlist.filtered -
 --scorep_mode=trace \
 --tapfile=filtered.tap
 
-# Evaluate results:
+# 6. Run the tests:
 cd batch
+sbatch runtests.batch
+
+# 7. Analyze results:
+# Once the job is complete
 ../checktests > checktests.out
-# TODO: analysis of results
+# List all failed tests, sorted by name:
+grep "# srun" checktests.out | sort -b -k 6
+
+
+Which tests are run?
+--------------------
+
+There are three circumstances that determine which tests are actually run.
+
+1. Options to configure
+The configure script produces testlist files from testlist.in files.
+There are options to disable groups of tests. See the output of configure --help or the original README below.
+Options are set in scorep/configure-for-scorep.sh.
+Tests excluded in this way do not show up in the testlist files and therefore are not listed in any statistic or evaluation.
+
+2. generate_filtered_testlists.py
+This script produces testlist.filtered files from testlist files based on the given exclude patterns.
+It logs each excluded test and outputs the numbers of included and excluded tests. 
+It only knows of the tests after the configure step.
+
+3. runtests
+The runtest script may also decide to skip tests, depending on the currrent configuration and options given for each individual test.
+These tests are reported in the .tap output as 'ok' with a comment '# SKIP <some reason>'.
 
 
 Some additional files:
 ----------------------
 
-Most additional files are inside the scorep/ folder. 
+Most additional files are inside the scorep/ folder.
 
-scorep/compiler-wrappers: 
-These wrappers should be given to configure. They set compile-time options for Score-P when building the tests.
+scorep/compiler-wrappers:
+The test suite should be configured with these wrappers as compile commands (see scorep/configure-for-scorep.sh).
+The wrappers set compile-time options for Score-P when building the tests.
 
 scorep/trace-validation:
-Scripts to compare two otf2 traces via otf2-print and diff. The comparison should be indifferent to information changing between runs (such as time stamps). These scripts are called by 'runtests' in the 'scorep_mode=trace' mode when extended trace validation is enabled for a test.
+Scripts to compare two otf2 traces via otf2-print and diff.
+The comparison should be indifferent to information changing between runs (such as time stamps).
+These scripts are called by 'runtests' in the 'scorep_mode=trace' mode when extended trace validation is enabled for a test.
 
-scorep/only-mtest.filter: 
-Score-P filter file to reduce the size of resulting traces to a minimum. Only MTest calls are recorded to provide some structure in the trace files
+scorep/only-mtest.filter:
+Score-P filter file to reduce the size of resulting traces to a minimum.
+Only MTest calls are recorded to provide some structure in the trace files.
+The filter is set by the runtests script.
 
-scorep/testlist-exclude-patterns.json: 
+scorep/testlist-exclude-patterns.json:
 Used by scorep/generate_filtered_testlists.py to determine which tests to exclude. 
-
-
 
 
 
