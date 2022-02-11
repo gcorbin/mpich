@@ -8,6 +8,7 @@
         "$^ Match the path of the test executable relative to the top test directory against these patterns:",
         "$^ Tests in ./errors can be incorrect MPI programs.",
         "$^ In some cases this results in critical errors in Score-P (e.g. invalid memory).",
+        "^./errors/comm/ccreate1",
         "^./errors/comm/cfree",
         "^./errors/comm/comm_group_nullarg",
         "^./errors/comm/comm_create_group_nullarg",
