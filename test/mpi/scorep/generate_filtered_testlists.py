@@ -53,6 +53,8 @@ def read_subdirs_and_tests(dirpath, testlist_in):
             # comment: skip
             if re.match(r'^\s*#', line):
                 continue
+            if re.match(r'^\s*$', line):
+                continue
             # test of the form 'executable num_processes extra_args'
             m = re.match(r'^(\w+)\s+\d+', line)
             if m:
