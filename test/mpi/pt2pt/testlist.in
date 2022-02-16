@@ -72,3 +72,6 @@ precv_anysrc 2 timeLimit=60
 precv_anysrc 2 timeLimit=60 env=MPIR_CVAR_CH4_OFI_AM_LONG_FORCE_PIPELINE=true
 precv_anysrc_exp 2 timeLimit=60
 pt2pt_large 2
+
+# Expose a bug in the Score-P pt2pt wrappers, where MPI_Type_size called with MPI_DATATYPE_NULL fails
+send_datatype_null 2
