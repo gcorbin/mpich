@@ -1,0 +1,20 @@
+{
+    "$^ Notes:": [
+        "Strings starting with '$^' will be treated as comments.",
+        "Tests matching at least one of the criteria in one of the categories below will be excluded from the filtered testlist.",
+        "For each category, a list of regex patterns can be supplied as exclude criteria."
+    ],
+    "exe-name": [
+        "$^ Exclude all but a few tests for testing purposes",
+        "^(?!(./pt2pt/sendrecv2|./coll/p_bcast))"
+    ],
+    "list-entry": [
+        "$^ Match the entire line in the testlist against these patterns:"
+    ],
+    "source-name": [
+        "$^ Match the name of each source file of the test against these patterns:"
+    ],
+    "source-contents": [
+        "$^ Match each line of each source file of the test against these patterns"
+    ]
+}
