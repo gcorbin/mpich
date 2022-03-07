@@ -27,3 +27,4 @@ i_hindexed 4
 i_noncontig_coll 2
 i_noncontig_coll2 4
 i_types_with_zeros 2
+split_coll 4 arg=-fname arg=split_coll.out
