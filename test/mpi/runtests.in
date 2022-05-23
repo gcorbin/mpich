@@ -996,6 +996,14 @@ sub RunMPIProgram {
             {
                 #skip
             }
+            elsif (/^\s*\[Score-P\].*?Warning:\s*Support for MPI_THREAD_\(SERIALIZED|MULTIPLE\) is currently experimental!/)
+            {
+                #skip
+            }
+            elsif (/^\s*Please report bugs and give feedback to support\@score-p\.org\./)
+            {
+                #skip
+            }
             elsif ($curdir =~ /^\.\/errors/ && /^\s*\[Score-P\].*?(Warning|Error)/) 
             {
                 # Ignore all Scorep Warnings and Errors for tests under ./errors/

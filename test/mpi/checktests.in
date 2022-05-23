@@ -70,6 +70,14 @@ while (<RESULTS>) {
         {
             next;
         }
+        if (/^\s*\[Score-P\].*?Warning:\s*Support for MPI_THREAD_\(SERIALIZED|MULTIPLE\) is currently experimental!/)
+        {
+            next;
+        }
+        if (/^\s*Please report bugs and give feedback to support\@score-p\.org\./)
+        {
+            next;
+        }
         # Ignore all Scorep Warnings and Errors for tests under ./errors/
         if ($runLine =~ /\s+\.\/errors/ && /^\s*\[Score-P\].*?(Warning|Error)/) 
         {
