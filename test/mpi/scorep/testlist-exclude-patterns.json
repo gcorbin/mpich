@@ -53,7 +53,9 @@
         "$^ See the general issue https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/122",
         "^./attr/attrend$",
         "^./attr/attrend2$",
-        "^./init/attrself$"
+        "^./init/attrself$",
+        "$^ The Fortran 2008 interface is not supported by Score-P",
+        "^./f08/"
     ],
     "list-entry": [
         "$^ Match the entire line in the testlist against these patterns:",
