@@ -71,8 +71,8 @@
         "^./attr/attrend$",
         "^./attr/attrend2$",
         "^./init/attrself$",
-        "$^ The Fortran 2008 interface is not supported by Score-P",
-        "^./f08/"
+        "$^ Only Pt2pt is implemented in the MPI wrapper",
+        "^./f08/(?!pt2pt)"
     ],
     "list-entry": [
         "$^ Match the entire line in the testlist against these patterns:",
