@@ -16,7 +16,7 @@ MPIFC=$wdir/scorep-mpi-only-mpif90 \
 MPIF77=$wdir/scorep-mpi-only-mpif77 \
 --prefix=`pwd`/install \
 --disable-dependency-tracking \
---enable-fortran=f77,f90 \
+--enable-fortran=f77,f90,f08 \
 --disable-cxx \
 --enable-threads=funneled \
 --enable-strictmpi

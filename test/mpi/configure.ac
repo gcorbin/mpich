@@ -1426,9 +1426,29 @@ fi
 
 f08dir="#"
 AC_SUBST(f08dir)
-# FIXME if $FROM_MPICH is no, we should test build an MPI F08 program
-if test "$enable_f08" = "yes" -a "$FROM_MPICH" = "yes" ; then
-   f08dir=f08
+if test "$enable_f08" = "yes" ; then
+    if "$FROM_MPICH" = "yes" ; then
+        f08dir=f08
+    else
+        AC_MSG_CHECKING([that we can build MPI programs with Fortran 08])
+        AC_LANG_PUSH([Fortran])
+        AC_LINK_IFELSE([
+            AC_LANG_SOURCE([
+                program main
+                use mpi_f08
+                integer ierr
+                call mpi_init(ierr)
+                call mpi_finalize(ierr)
+                end
+            ])
+        ],[
+            AC_MSG_RESULT(yes)
+            f08dir=f08
+        ],[
+            AC_MSG_RESULT(no)
+        ])
+        AC_LANG_POP([Fortran])
+    fi
 fi
 
 # Running C++ compiler tests
