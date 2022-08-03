@@ -10,5 +10,5 @@ EXTRA_DIST = testlist
 # avoid having to write many "foo_SOURCES = foo.f90" lines
 AM_DEFAULT_SOURCE_EXT = .f90
 
-noinst_PROGRAMS = commnamef08 commerrf08
+noinst_PROGRAMS = commnamef08 commerrf08 comm_idupf08
 

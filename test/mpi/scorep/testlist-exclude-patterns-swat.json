@@ -71,8 +71,8 @@
         "^./attr/attrend$",
         "^./attr/attrend2$",
         "^./init/attrself$",
-        "$^ Only Pt2pt is implemented in the MPI wrapper",
-        "^./f08/(?!pt2pt)"
+        "$^ Positive list for Fortran08 wrappers according to current implementation status:",
+        "^./f08/(?!pt2pt|comm)"
     ],
     "list-entry": [
         "$^ Match the entire line in the testlist against these patterns:",
@@ -92,6 +92,7 @@
         "(?i)MPI_Session", "$^ Score-P does not support MPI_Session.",
         "(?i)MPI_Comm_idup_with_info", "$^ Not supported, will result in untracked communicators",
         "(?i)MPI_Pready", "(?i)MPI_Psend", "(?i)MPI_Precv", "$^ Partitioned communication is not supported",
-        "(?i)MPI_Open_port", "$^ Not supported with UCX which is running on the cluster"
+        "(?i)MPI_Open_port", "$^ Not supported with UCX which is running on the cluster",
+        "(?i)MPI_(Test|Wait)(some|all|any)", "$^ Not implemented in W2G"
     ]
 }
