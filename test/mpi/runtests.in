@@ -570,6 +570,7 @@ sub RunList {
                 push @{$test_opt->{envs}}, "SCOREP_OVERWRITE_EXPERIMENT_DIRECTORY=1";
                 push @{$test_opt->{envs}}, "SCOREP_EXPERIMENT_DIRECTORY=scorep_last_run";
                 push @{$test_opt->{envs}}, "SCOREP_FILTERING_FILE=$scorep_filter_file";
+		push @{$test_opt->{envs}}, "SCOREP_MPI_ENABLE_GROUPS=ALL";
 
                 if ($scorep_mode eq "quiet") {
                     push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=false";
