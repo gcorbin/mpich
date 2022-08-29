@@ -76,6 +76,6 @@
         "(?i)MPI_Session", "$^ Score-P does not support MPI_Session.",
         "(?i)MPI_Comm_idup_with_info", "$^ Not supported, will result in untracked communicators",
         "(?i)MPI_Pready", "(?i)MPI_Psend", "(?i)MPI_Precv", "$^ Partitioned communication is not supported",
-        "(?i)MPI_(Test|Wait)(some|all|any)", "$^ Not implemented in W2G"
+        "(?i)MPI_(Test|Wait)some", "$^ Not implemented in W2G"
     ]
 }
