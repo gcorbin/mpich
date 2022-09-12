@@ -1,2 +1,2 @@
 createf90types 1
-createf90types 1 arg=10000 env=SCOREP_TOTAL_MEMORY=70M
+createf90types 1 arg=10000 env=SCOREP_TOTAL_MEMORY=100M

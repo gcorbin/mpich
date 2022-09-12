@@ -1,4 +1,4 @@
-adderr 1
+adderr 1 env=SCOREP_TOTAL_MEMORY=100M
 commcall 2
 commcall_oldapi 2 strict=FALSE
 errfatal 1 resultTest=TestErrFatal
