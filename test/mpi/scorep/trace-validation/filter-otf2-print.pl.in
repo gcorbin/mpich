@@ -98,11 +98,11 @@ else
 # Process the input file
 #---------------------------------------------------------------------------
 my @otf2_header = (
-"",
-"=== OTF2-PRINT ===",
-"=== Events =====================================================================",
-"Event                               Location            Timestamp  Attributes",
-"--------------------------------------------------------------------------------",
+qr/^$/,
+qr/^=== OTF2-PRINT ===$/,
+qr/^=== Events =====================================================================$/,
+qr/^Event\s+Location\s+Timestamp\s+Attributes\s*$/,
+qr/^--------------------------------------------------------------------------------$/,
 );
 my $num_header_lines = @otf2_header;
 
@@ -113,7 +113,7 @@ while( my $line = <$input_stream> )
     chomp($line);
     # The first few lines are a header
     # Check line by line if the input matches our expectations
-    if ( $line_number < $num_header_lines and not ($line =~ m/^$otf2_header[$line_number]$/) )
+    if ( $line_number < $num_header_lines and not ( $line =~ $otf2_header[$line_number]) )
     {
         print STDERR "Invalid OTF2 header.
 Expected '$otf2_header[$line_number]',
