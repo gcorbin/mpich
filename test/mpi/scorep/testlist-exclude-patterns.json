@@ -45,6 +45,8 @@
         "$^ See the general issue https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/122",
         "^./f77/info/infotest2f$",
         "^./f90/info/infotest2f90$",
+        "^./f77/info/infogetstrf$",
+        "^./f90/info/infogetstrf90$",
         "^./f77/pt2pt/greqf$",
         "^./f90/pt2pt/greqf90$",
         "$^ The following tests depend on MPI_Finalize freeing attributes on communicators.",
