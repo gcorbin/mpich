@@ -7,6 +7,7 @@ wdir=`pwd`/scorep/compiler-wrappers
 SCOREP_WRAPPER=off \
 ./configure \
 CC=$wdir/scorep-mpi-only-gcc \
+CFLAGS=-DSCOREP_SUPPORTS_INTERCOMM \
 CXX=$wdir/scorep-mpi-only-g++ \
 FC=$wdir/scorep-mpi-only-gfortran \
 F77=$wdir/scorep-mpi-only-gfortran \
