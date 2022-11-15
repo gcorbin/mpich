@@ -157,7 +157,8 @@ noinst_PROGRAMS =      \
     ic_bytes_gatherv \
     ic_bytes_reduce \
     ic_bytes_scatter \
-    ic_bytes_scatterv
+    ic_bytes_scatterv \
+    ic_bytes_alltoall
 
 allgatherv4_LDADD = $(LDADD) -lm
 
@@ -227,5 +228,7 @@ ic_bytes_reduce_SOURCES = ic_bytes_reduce.c ic_bytes_common.h ic_bytes_common.c
 ic_bytes_scatter_SOURCES = ic_bytes_scatter.c ic_bytes_common.h ic_bytes_common.c
 
 ic_bytes_scatterv_SOURCES = ic_bytes_scatterv.c ic_bytes_common.h ic_bytes_common.c
+
+ic_bytes_alltoall_SOURCES = ic_bytes_alltoall.c ic_bytes_common.h ic_bytes_common.c
 
 
