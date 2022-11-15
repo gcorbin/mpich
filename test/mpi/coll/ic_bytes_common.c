@@ -8,9 +8,9 @@ void getIntercomm(int lsize, int rsize, MPI_Comm* intercomm, int* in_left_group)
     MPI_Comm_size(MPI_COMM_WORLD, &wsize);
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
 
-    if ( wsize < total_requested_size )
+    if ( wsize != total_requested_size )
     {
-        fprintf(stderr, "At least %d processes required, but world size is only %d\n", total_requested_size, wsize);
+        fprintf(stderr, "Exactly %d processes required, but world size is only %d\n", total_requested_size, wsize);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
@@ -84,9 +84,21 @@ void print_expected_bytes(MPI_Comm intercomm, int in_left_group, ByteCounts byte
     PMPI_Gather(&wrank, 1, MPI_INT, world_ranks, 1, MPI_INT, 0, merged_comm);
     if ( mrank == 0 )
     {
+//         for (int rank = 0; rank < msize; ++rank)
+//         {
+//             MTestPrintfMsg(1, "Rank %3d(%3d in %s group): sendbytes = %8ld, recvbytes = %8ld\n", world_ranks[rank], local_ranks[rank], (left_right[rank])?"left ":"right", sendbytes[rank], recvbytes[rank]);
+//         }
+        MTestPrintfMsg(1, "sendbytes: ");
         for (int rank = 0; rank < msize; ++rank)
         {
-            MTestPrintfMsg(1, "Rank %3d(%3d in %s group): sendbytes = %8ld, recvbytes = %8ld\n", world_ranks[rank], local_ranks[rank], (left_right[rank])?"left ":"right", sendbytes[rank], recvbytes[rank]);
+            MTestPrintfMsg(1, "%8ld ", sendbytes[rank]);
         }
+        MTestPrintfMsg(1, "\n");
+        MTestPrintfMsg(1, "recvbytes: ");
+        for (int rank = 0; rank < msize; ++rank)
+        {
+            MTestPrintfMsg(1, "%8ld ", recvbytes[rank]);
+        }
+        MTestPrintfMsg(1, "\n");
     }
 }
