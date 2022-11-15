@@ -151,7 +151,13 @@ noinst_PROGRAMS =      \
     bcast              \
     bcast_comm_world_only \
     coll_large	       \
-    ring_neighbor_alltoall
+    ring_neighbor_alltoall \
+    ic_bytes_bcast \
+    ic_bytes_gather \
+    ic_bytes_gatherv \
+    ic_bytes_reduce \
+    ic_bytes_scatter \
+    ic_bytes_scatterv
 
 allgatherv4_LDADD = $(LDADD) -lm
 
@@ -209,4 +215,17 @@ bcast_comm_world_only_SOURCES = bcast.c
 
 uoplong_large_SOURCES = uoplong.c
 uoplong_large_CPPFLAGS = -DOP_LARGE $(AM_CPPFLAGS)
+
+ic_bytes_bcast_SOURCES = ic_bytes_bcast.c ic_bytes_common.h ic_bytes_common.c
+
+ic_bytes_gather_SOURCES = ic_bytes_gather.c ic_bytes_common.h ic_bytes_common.c
+
+ic_bytes_gatherv_SOURCES = ic_bytes_gatherv.c ic_bytes_common.h ic_bytes_common.c
+
+ic_bytes_reduce_SOURCES = ic_bytes_reduce.c ic_bytes_common.h ic_bytes_common.c
+
+ic_bytes_scatter_SOURCES = ic_bytes_scatter.c ic_bytes_common.h ic_bytes_common.c
+
+ic_bytes_scatterv_SOURCES = ic_bytes_scatterv.c ic_bytes_common.h ic_bytes_common.c
+
 
