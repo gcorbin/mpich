@@ -16,28 +16,38 @@ get_cube_metric()
     # Dump the metric $metric_name for callpath 'main' inclusive for all ranks
     # Look for the output line that contains the metrics and keep only
     # the numbers
-    local str=$(cube_dump -z incl -c name=/main/ -m "${metric_name}" "${file_name}" | grep "main" | sed "s/main(id=[[:digit:]]\+)//")
-    str=$(cleanup_spaces "$str")
+
+    local str="xxx"
+    if [ -f "$file_name" ]; then
+        str=$(cube_dump -z incl -c name=/main/ -m "${metric_name}" "${file_name}" | grep "main" | sed "s/main(id=[[:digit:]]\+)//")
+        str=$(cleanup_spaces "$str")
+    fi
     echo "$str"
 }
 
-test_names="bcast gather gatherv reduce scatter scatterv"
+# Find all test executables in this folder that start with 'ic_bytes_'
+# or 'nbic_bytes'
+test_names=$(find . -regex '\./\(nb\)?ic_bytes_\w*')
+ntests=$(echo "$test_names" | wc -l)
+echo "Found $ntests tests"
 
 
 export SCOREP_EXPERIMENT_DIRECTORY="scorep-latest"
 # Enable output in the tests
 export MPITEST_VERBOSE=1
-errs=0
+tests_passed=0
+tests_failed=0
 
 for test_name in $test_names; do
     echo "Test $test_name"
 
+    errs=0
     # Cleanup previous experiment archive, if present
     if [ -d "scorep-latest" ]; then
         rm -r "scorep-latest"
     fi
     # Run the instrumented test
-    mpirun -n 6 ./ic_bytes_${test_name} > test.log
+    mpirun -n 6 ${test_name} > test.log
 
     # Get the expected numbers of bytes from the test output
     sendbytes_expected=$(grep "sendbytes:" test.log | sed "s/sendbytes://")
@@ -67,10 +77,20 @@ for test_name in $test_names; do
 
     if [ $errs -eq 0 ]; then
         echo "ok"
+        tests_passed=$((tests_passed+1))
+    else
+        echo "not ok: $errs errors"
+        tests_failed=$((tests_failed+1))
     fi
 done
 
-if [ $errs -gt 0 ]; then
+echo "------------------------------------------------"
+echo "summary:"
+echo "  tests passed: $tests_passed"
+echo "  tests failed: $tests_failed"
+echo ""
+
+if [ $tests_failed -gt 0 ]; then
     exit 1
 else
     exit 0

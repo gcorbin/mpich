@@ -158,7 +158,28 @@ noinst_PROGRAMS =      \
     ic_bytes_reduce \
     ic_bytes_scatter \
     ic_bytes_scatterv \
-    ic_bytes_alltoall
+    ic_bytes_alltoall \
+    ic_bytes_alltoallv \
+    ic_bytes_alltoallw \
+    ic_bytes_allgather \
+    ic_bytes_allgatherv \
+    ic_bytes_allreduce \
+    ic_bytes_reduce_scatter_block \
+    ic_bytes_reduce_scatter\
+    nbic_bytes_bcast \
+    nbic_bytes_gather \
+    nbic_bytes_gatherv \
+    nbic_bytes_reduce \
+    nbic_bytes_scatter \
+    nbic_bytes_scatterv \
+    nbic_bytes_alltoall \
+    nbic_bytes_alltoallv \
+    nbic_bytes_alltoallw \
+    nbic_bytes_allgather \
+    nbic_bytes_allgatherv \
+    nbic_bytes_allreduce \
+    nbic_bytes_reduce_scatter_block \
+    nbic_bytes_reduce_scatter
 
 allgatherv4_LDADD = $(LDADD) -lm
 
@@ -217,18 +238,76 @@ bcast_comm_world_only_SOURCES = bcast.c
 uoplong_large_SOURCES = uoplong.c
 uoplong_large_CPPFLAGS = -DOP_LARGE $(AM_CPPFLAGS)
 
-ic_bytes_bcast_SOURCES = ic_bytes_bcast.c ic_bytes_common.h ic_bytes_common.c
+noinst_LIBRARIES = libic_bytes_common.a
+libic_bytes_common_a_SOURCES = ic_bytes_common.h ic_bytes_common.c
 
-ic_bytes_gather_SOURCES = ic_bytes_gather.c ic_bytes_common.h ic_bytes_common.c
+ic_bytes_bcast_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_gather_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_gatherv_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_reduce_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_scatter_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_scatterv_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_alltoall_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_alltoallv_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_alltoallw_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_allgather_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_allgatherv_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_allreduce_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_reduce_scatter_block_LDADD = $(LDADD) libic_bytes_common.a
+ic_bytes_reduce_scatter_LDADD = $(LDADD) libic_bytes_common.a
 
-ic_bytes_gatherv_SOURCES = ic_bytes_gatherv.c ic_bytes_common.h ic_bytes_common.c
+nbic_bytes_bcast_SOURCES = ic_bytes_bcast.c
+nbic_bytes_bcast_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_bcast_LDADD = $(LDADD) libic_bytes_common.a
 
-ic_bytes_reduce_SOURCES = ic_bytes_reduce.c ic_bytes_common.h ic_bytes_common.c
+nbic_bytes_gather_SOURCES = ic_bytes_gather.c
+nbic_bytes_gather_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_gather_LDADD = $(LDADD) libic_bytes_common.a
 
-ic_bytes_scatter_SOURCES = ic_bytes_scatter.c ic_bytes_common.h ic_bytes_common.c
+nbic_bytes_gatherv_SOURCES = ic_bytes_gatherv.c
+nbic_bytes_gatherv_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_gatherv_LDADD = $(LDADD) libic_bytes_common.a
 
-ic_bytes_scatterv_SOURCES = ic_bytes_scatterv.c ic_bytes_common.h ic_bytes_common.c
+nbic_bytes_reduce_SOURCES = ic_bytes_reduce.c
+nbic_bytes_reduce_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_reduce_LDADD = $(LDADD) libic_bytes_common.a
 
-ic_bytes_alltoall_SOURCES = ic_bytes_alltoall.c ic_bytes_common.h ic_bytes_common.c
+nbic_bytes_scatter_SOURCES = ic_bytes_scatter.c
+nbic_bytes_scatter_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_scatter_LDADD = $(LDADD) libic_bytes_common.a
 
+nbic_bytes_scatterv_SOURCES = ic_bytes_scatterv.c
+nbic_bytes_scatterv_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_scatterv_LDADD = $(LDADD) libic_bytes_common.a
 
+nbic_bytes_alltoall_SOURCES = ic_bytes_alltoall.c
+nbic_bytes_alltoall_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_alltoall_LDADD = $(LDADD) libic_bytes_common.a
+
+nbic_bytes_alltoallv_SOURCES = ic_bytes_alltoallv.c
+nbic_bytes_alltoallv_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_alltoallv_LDADD = $(LDADD) libic_bytes_common.a
+
+nbic_bytes_alltoallw_SOURCES = ic_bytes_alltoallw.c
+nbic_bytes_alltoallw_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_alltoallw_LDADD = $(LDADD) libic_bytes_common.a
+
+nbic_bytes_allgather_SOURCES = ic_bytes_allgather.c
+nbic_bytes_allgather_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_allgather_LDADD = $(LDADD) libic_bytes_common.a
+
+nbic_bytes_allgatherv_SOURCES = ic_bytes_allgatherv.c
+nbic_bytes_allgatherv_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_allgatherv_LDADD = $(LDADD) libic_bytes_common.a
+
+nbic_bytes_allreduce_SOURCES = ic_bytes_allreduce.c
+nbic_bytes_allreduce_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_allreduce_LDADD = $(LDADD) libic_bytes_common.a
+
+nbic_bytes_reduce_scatter_block_SOURCES = ic_bytes_reduce_scatter_block.c
+nbic_bytes_reduce_scatter_block_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_reduce_scatter_block_LDADD = $(LDADD) libic_bytes_common.a
+
+nbic_bytes_reduce_scatter_SOURCES = ic_bytes_reduce_scatter.c
+nbic_bytes_reduce_scatter_CPPFLAGS = -DUSE_MTEST_NBC $(AM_CPPFLAGS)
+nbic_bytes_reduce_scatter_LDADD = $(LDADD) libic_bytes_common.a
