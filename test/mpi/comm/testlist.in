@@ -10,7 +10,7 @@ icm 8
 icsplit 8
 iccreate 8
 ctxalloc 2 timeLimit=300 env=SCOREP_MPI_MAX_COMMUNICATORS=205 env=SCOREP_TOTAL_MEMORY=80M
-ctxsplit 4 timeLimit=300
+ctxsplit 4 env=SCOREP_TOTAL_MEMORY=20M timeLimit=300
 cmfree 4 env=SCOREP_MPI_MAX_COMMUNICATORS=1024
 cmfree2 2
 cmsplit 4

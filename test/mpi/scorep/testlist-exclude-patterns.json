@@ -15,6 +15,7 @@
         "^./errors/comm/comm_create_nullarg$",
         "^./errors/comm/comm_split_nullarg$",
         "^./errors/comm/comm_split_type_nullarg$",
+        "^./errors/comm/intercomm_create_nullarg",
         "^./errors/group/group_difference_nullarg$",
         "^./errors/group/group_intersection_nullarg$",
         "^./errors/group/group_range_excl_nullarg$",
@@ -69,7 +70,9 @@
     ],
     "source-contents": [
         "$^ Match each line of each source file of the test against these patterns",
-        "(?i)MPI_Comm_Spawn", "$^ Spawn requires Intercomm support",
+        "(?i)MPI_Comm_spawn",
+        "(?i)MPI_Comm_join",
+        "(?i)MPI_Intercomm_create_from_groups",
         "(?i)MPI_Session", "$^ Score-P does not support MPI_Session.",
         "(?i)MPI_Comm_idup_with_info", "$^ Not supported, will result in untracked communicators",
         "(?i)MPI_Pready", "(?i)MPI_Psend", "(?i)MPI_Precv", "$^ Partitioned communication is not supported"
