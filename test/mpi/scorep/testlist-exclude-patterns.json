@@ -56,9 +56,7 @@
         "$^ See the general issue https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/122",
         "^./attr/attrend$",
         "^./attr/attrend2$",
-        "^./init/attrself$",
-        "$^ Exclude Fortran08 wrappers according to current implementation status:",
-        "^./f08/io"
+        "^./init/attrself$"
     ],
     "list-entry": [
         "$^ Match the entire line in the testlist against these patterns:",
