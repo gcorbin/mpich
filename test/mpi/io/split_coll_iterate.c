@@ -87,7 +87,10 @@ int main(int argc, char **argv)
     MPI_CHECK(MPI_File_close(&file));
 
     MPI_Barrier(comm);
-    MPI_CHECK(MPI_File_delete("iotest.txt", MPI_INFO_NULL));
+    if (rank == 0)
+    {
+        MPI_CHECK(MPI_File_delete("iotest.txt", MPI_INFO_NULL));
+    }
     MPI_Barrier(comm);
 
     MPI_CHECK(MPI_Type_free(&filetype));
