@@ -1,0 +1,24 @@
+{
+    "$^ Notes:": [
+        "Strings starting with '$^' will be treated as comments.",
+        "Tests matching at least one of the criteria in one of the categories below will be excluded from the filtered testlist.",
+        "For each category, a list of regex patterns can be supplied as exclude criteria."
+    ],
+    "exe-name": [
+        "$^ Match the path of the test executable relative to the top test directory against these patterns:",
+        "^./rma/wintest",
+        "^./rma/req_example",
+        "^./rma/linked_list",
+        "^./rma/mutex_bench"
+    ],
+    "list-entry": [
+        "$^ Match the entire line in the testlist against these patterns:"
+    ],
+    "source-name": [
+        "$^ Match the name of each source file of the test against these patterns:"
+    ],
+    "source-contents": [
+        "$^ Match each line of each source file of the test against these patterns",
+        "(?i)MPI_Test(all|any|some)?", "(?i)MPI_Wait(any|some)",  "$^ Non-determinism possible"
+    ]
+}

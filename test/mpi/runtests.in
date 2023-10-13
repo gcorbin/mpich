@@ -52,6 +52,8 @@ use Fcntl qw(:flock);
 use File::Spec qw(splitpath);
 use Cwd qw(abs_path);
 
+use Digest::MD5 qw(md5_hex);
+
 # Absolute path and file name of this script
 my $abs_program_path = abs_path(__FILE__);
 my $program_dir;
@@ -499,6 +501,16 @@ sub ProcessDir {
     $curdir = $savecurdir;
     $srcdir = $savesrcdir;
 }
+
+
+sub GetRefTraceName {
+    my ($programname,$argstring) = @_;
+
+    my $args_md5 = md5_hex($argstring);
+
+    return "reference_$programname\_$args_md5";
+}
+
 # ---------------------------------------------------------------------------
 # Run the programs listed in the file given as the argument. 
 # This file describes the tests in the format
@@ -615,9 +627,6 @@ sub RunList {
                     elsif ($key eq "mpix") {
                         $requiresMPIX = $value
                     }
-                    elsif ($key eq "reference_trace") {
-                        $test_opt->{reference_trace} = $value
-                    }
                     else {
                         print STDERR "Unrecognized key $key in $listfileSource\n";
                     }
@@ -682,26 +691,20 @@ sub RunList {
             {
 
                 my $has_reference_trace = 0;
-                if (defined $test_opt->{resultTest} and defined $test_opt->{reference_trace})
+                if ($scorep_mode eq "generate_reference_traces" && defined $test_opt->{resultTest})
                 {
-                    SkippedTest($programname, $np, $test_opt, $curdir, "reference_trace is not allowed in combination with the resultTest option.");
+                    SkippedTest($programname, $np, $test_opt, $curdir, "Reference traces are not supported for tests with the resultTest option.");
                     next;
                 }
 
-                if (defined $test_opt->{reference_trace})
+                if ($scorep_mode eq "trace" || $scorep_mode eq "generate_reference_traces")
                 {
-                    my $reference_trace = $test_opt->{reference_trace};
-                    if ($reference_trace !~ m/^[a-zA-Z0-9_\-.]+$/ )
-                    {
-                        SkippedTest($programname, $np, $test_opt, $curdir, "The name of the reference trace '$reference_trace ' is invalid: It should only contain alphanumeric characters, '_', '-', and '.'");
-                        next;
-                    }
-
+                    my $reference_trace = GetRefTraceName($programname,  join(' ', @args));
+                    $test_opt->{reference_trace}=$reference_trace;
                     if (-d $reference_trace && -f "$reference_trace/traces.otf2")
                     {
                         $has_reference_trace = 1;
                     }
-
                     if ($scorep_mode eq "trace" && !$has_reference_trace)
                     {
                         SkippedTest($programname, $np, $test_opt, $curdir, "Could not find the specified reference trace $reference_trace");
@@ -713,12 +716,6 @@ sub RunList {
                 {
                         SkippedTest($programname, $np, $test_opt, $curdir, "Generating missing traces: this test already has a reference trace");
                         next;
-                }
-
-                if ($scorep_mode eq "generate_reference_traces" && !defined $test_opt->{reference_trace})
-                {
-                    SkippedTest($programname, $np, $test_opt, $curdir, "Generating missing traces: this test does not need a reference trace");
-                    next;
                 }
             }
 
