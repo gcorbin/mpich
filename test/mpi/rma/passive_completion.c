@@ -6,12 +6,9 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include "mpitest.h"
 
-#define ITER 100
-#define MAX_SIZE 65536
-
+// #define VERBOSE
 
 enum Direction{
     DIR_PUT=0,
@@ -20,6 +17,28 @@ enum Direction{
 };
 
 typedef enum Direction Direction;
+
+enum FlushType{
+    NO_FLUSH = 0,
+    FLUSH,
+    FLUSH_ALL,
+    FLUSH_LOCAL,
+    FLUSH_LOCAL_ALL,
+    NUM_FLUSH_TYPES
+};
+
+typedef enum FlushType FlushType;
+
+enum LockType
+{
+    LOCK_ONE = 0,
+    LOCK_ALL,
+    NUM_LOCK_TYPES
+};
+
+typedef enum LockType LockType;
+
+#define NUM_FLUSH_INTERVALS 3
 
 
 void
@@ -84,22 +103,6 @@ init_buffers(Direction dir, int origin, int target, int N, int* localbuf, int* w
     return buffers;
 }
 
-// int check_buffer_on_rank(int testnum, int rank, int N, int* buf)
-// {
-//     int myrank;
-//     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-//
-//     int errors = 0;
-//     if (rank == myrank)
-//     {
-//         if (!check_buffer(N, buf)) {
-//             printf("Test %d, Error in buffer in rank %d\n", testnum, rank);
-//             ++errors;
-//         }
-//     }
-//     return errors;
-// }
-
 int
 check_buffers(int testnum, Buffers buffers)
 {
@@ -116,51 +119,6 @@ check_buffers(int testnum, Buffers buffers)
     }
     return 1;
 }
-
-/*
-enum Role
-{
-    ROLE_NONE,
-    ROLE_SENDER,
-    ROLE_RECEIVER
-};
-
-
-typedef enum Role Role;
-
-Role
-get_role(Direction dir, int origin, int target)
-{
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-    if (origin == target)
-    {
-        printf("Self communication is not supported in this test\n");
-        MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-    switch(dir)
-    {
-        case DIR_PUT:
-            if (my_rank==origin)
-            {
-                return ROLE_SENDER
-            } else if (my_rank == target ) {
-                return ROLE_RECEIVER;
-            }
-        case DIR_GET:
-            if (my_rank==origin)
-            {
-                return ROLE_RECEIVER;
-            } else if (my_rank == target ) {
-                return ROLE_SENDER;
-            }
-    }
-    return ROLE_NONE;
-}*/
-
-
-
 
 void
 sync_target_with_origin(Direction dir, int target, int origin)
@@ -208,18 +166,6 @@ issue_rma_req_op(Direction dir, int* buf, int disp, int target, MPI_Win window, 
             break;
     }
 }
-
-
-enum FlushType{
-    NO_FLUSH = 0,
-    FLUSH,
-    FLUSH_ALL,
-    FLUSH_LOCAL,
-    FLUSH_LOCAL_ALL,
-    NUM_FLUSH_TYPES
-};
-
-typedef enum FlushType FlushType;
 
 void issue_flush(FlushType flush, int target, MPI_Win window)
 {
@@ -269,14 +215,6 @@ flush_name(FlushType flush)
     }
 }
 
-enum LockType
-{
-    LOCK_ONE = 0,
-    LOCK_ALL,
-    NUM_LOCK_TYPES
-};
-
-typedef enum LockType LockType;
 
 void
 issue_lock(LockType lock, int target, MPI_Win window)
@@ -314,9 +252,6 @@ issue_unlock(LockType lock, int target, MPI_Win window)
     }
 }
 
-#define NUM_FLUSH_INTERVALS 3
-
-#define VERBOSE
 
 int
 wait_all_outstanding(int current, int last_completed, MPI_Request* requests)
@@ -560,23 +495,6 @@ int main(int argc, char *argv[])
             }
         }
     }
-
-    // combination of MPI_Win_lock, and more than one Rput per epoch
-    // triggers
-    // [Score-P] src/adapters/mpi/scorep_mpi_rma_request.c:112: Warning: Request tracking not completed successfully for all RMA operations.
-//     if (rank == origin)
-//     {
-//         MPI_Win_lock(MPI_LOCK_EXCLUSIVE, target, 0, window);
-// //          MPI_Win_lock_all(0, window);
-//         for (int i = 0; i < 3; ++i)
-//         {
-//         MPI_Request request;
-//         MPI_Rput(buf+i, 1, MPI_INT, target, i, 1, MPI_INT, window, &request);
-//         MPI_Wait(&request, MPI_STATUS_IGNORE);
-//         }
-//         MPI_Win_unlock(target, window);
-// //         MPI_Win_unlock_all(window);
-//     }
 
     MPI_Win_free(&window);
 
