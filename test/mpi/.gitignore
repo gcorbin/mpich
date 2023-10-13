@@ -1,6 +1,7 @@
 scorep/trace-validation/*.pl
 *.tap
 scorep_last_run*/
+reference_*/
 *.json
 !scorep/*.json
 testlist.filtered
@@ -1466,6 +1467,7 @@ testlist.filtered
 /rma/overlap_wins_fop
 /rma/overlap_wins_gacc
 /rma/overlap_wins_put
+/rma/passive_completion
 /rma/pscw_ordering
 /rma/pscw_ordering_shm
 /rma/put_base
