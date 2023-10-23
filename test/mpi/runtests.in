@@ -310,8 +310,8 @@ foreach $_ (@ARGV) {
     }
     elsif (/--?scorep_mode=(.*)/) {
         $scorep_mode = $1;
-        if ($scorep_mode !~ m/(off|quiet|profile|trace|generate_reference_traces)/) {
-            die "Invalid value for argument scorep_mode:  $scorep_mode. Set to one of 'off', 'quiet', 'profile', 'trace', 'generate_reference_traces'\n";
+        if ($scorep_mode !~ m/(off|quiet|profile|trace|trace_make_ref)/) {
+            die "Invalid value for argument scorep_mode:  $scorep_mode. Set to one of 'off', 'quiet', 'profile', 'trace', 'trace_make_ref'\n";
         }
     }
     elsif (/--?coverage/) {
@@ -592,7 +592,7 @@ sub RunList {
                     push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=true";
                     push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=false";
                 }
-                else { # trace or generate_reference_traces
+                else { # trace or trace_make_ref
                     push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=false";
                     push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=true";
                 }
@@ -691,13 +691,13 @@ sub RunList {
             {
 
                 my $has_reference_trace = 0;
-                if ($scorep_mode eq "generate_reference_traces" && defined $test_opt->{resultTest})
+                if ($scorep_mode eq "trace_make_ref" && defined $test_opt->{resultTest})
                 {
                     SkippedTest($programname, $np, $test_opt, $curdir, "Reference traces are not supported for tests with the resultTest option.");
                     next;
                 }
 
-                if ($scorep_mode eq "trace" || $scorep_mode eq "generate_reference_traces")
+                if ($scorep_mode eq "trace" || $scorep_mode eq "trace_make_ref")
                 {
                     my $reference_trace = GetRefTraceName($programname,  join(' ', @args));
                     $test_opt->{reference_trace}=$reference_trace;
@@ -712,7 +712,7 @@ sub RunList {
                     }
                 }
 
-                if ($scorep_mode eq "generate_reference_traces" && $has_reference_trace )
+                if ($scorep_mode eq "trace_make_ref" && $has_reference_trace )
                 {
                         SkippedTest($programname, $np, $test_opt, $curdir, "Generating missing traces: this test already has a reference trace");
                         next;
@@ -1057,7 +1057,7 @@ sub RunMPIProgram {
         print STDERR " Profile file does not exist for this test\n";
         goto TEST_FAILED;
     }
-    if ( $scorep_mode =~ /(trace|generate_reference_traces)/ and not (-f "scorep_last_run/traces.otf2") )
+    if ( $scorep_mode =~ /(trace|trace_make_ref)/ and not (-f "scorep_last_run/traces.otf2") )
     {
         print STDERR "Trace file does not exist for this test\n";
         goto TEST_FAILED;
@@ -1089,7 +1089,7 @@ sub RunMPIProgram {
                 goto TEST_FAILED;
             }
         }
-        elsif ($scorep_mode eq "generate_reference_traces")
+        elsif ($scorep_mode eq "trace_make_ref")
         {
             if (-d $reference_trace)
             {
