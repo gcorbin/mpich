@@ -79,7 +79,8 @@
         "xfail=ticket\\d+", "$^ The xfail option is not honored by runtests if the --enable-strictmpi option was given to configure. These are tests that are expected to fail with MPICH.",
         "resultTest=", "$^ Tests with the resultTest option are not supported in runtests --batch. Exclude them here to maintain consistent test counts.",
         "^darray_pack 72$", "$^ This test uses too many processes",
-        "^ic2 33$", "$^ This test uses too many processes"
+        "^ic2 33$", "$^ This test uses too many processes",
+        "passive_completion \\d+ arg=3", "$^ This test is designed to trigger https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/142"
     ],
     "source-name": [
         "$^ Match the name of each source file of the test against these patterns:"
