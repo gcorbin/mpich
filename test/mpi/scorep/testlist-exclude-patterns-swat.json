@@ -50,10 +50,6 @@
         "^./f90/attr/",
         "^./f90/rma/winattrf90$",
         "^./f90/rma/winattr2f90$",
-        "$^ See issue https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/142",
-        "^./rma/reqops$",
-        "^./rma/rget_unlock$",
-        "^./rma/rmazero$",
         "$^ See issue https://gitlab.jsc.fz-juelich.de/perftools/otf2/-/issues/21", 
         "^./comm/ctxalloc$",
         "$^ The following bugs are considered low priority and don't have their own issue.",
@@ -77,9 +73,7 @@
         "xfail=ticket\\d+", "$^ The xfail option is not honored by runtests if the --enable-strictmpi option was given to configure. These are tests that are expected to fail with MPICH.",
         "resultTest=", "$^ Tests with the resultTest option are not supported in runtests --batch. Exclude them here to maintain consistent test counts.",
         "^darray_pack 72$", "$^ This test uses too many processes",
-        "^ic2 33$", "$^ This test uses too many processes",
-        "passive_completion \\d+ arg=3", "$^ This test is designed to trigger https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/142",
-        "passive_completion \\d+ arg=4", "$^ This test is designed to trigger https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/142"
+        "^ic2 33$", "$^ This test uses too many processes"
     ],
     "source-name": [
         "$^ Match the name of each source file of the test against these patterns:"
