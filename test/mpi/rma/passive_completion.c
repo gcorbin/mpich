@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include "mpitest.h"
 
-// #define VERBOSE
+ #define VERBOSE
 
 enum Direction{
     DIR_PUT=0,
@@ -292,11 +292,11 @@ all_requests_completed(int N, MPI_Request* requests)
 
 int main(int argc, char *argv[])
 {
-    int test_sets[3] = {0, 0, 0};
+    int test_sets[4] = {0, 0, 0, 0};
     for (int i = 1; i < argc; ++i)
     {
         int n = atoi(argv[i]);
-        if ( n >= 1 && n <= 3)
+        if ( n >= 1 && n <= 4)
         {
             test_sets[n-1] = 1;
         }
@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
                         if (rank == 0)
                         {
                             printf("Test %d\n", testnum);
-                            printf("MPI_Win_lock%s, %s from %d to %d, %s every %d operations, MPI_Win_unlock%s\n",
+                            printf("MPI_Win_lock%s, iterate(%s from %d to %d, %s every %d operations), MPI_Win_unlock%s\n",
                                     (lock == LOCK_ONE)?"":"_all",
                                    (dir == DIR_GET)?"MPI_Get":"MPI_Put",
                                     origin,
@@ -399,7 +399,7 @@ int main(int argc, char *argv[])
                         if (rank == 0)
                         {
                             printf("Test %d\n", testnum);
-                            printf("MPI_Win_lock%s, %s from %d to %d, MPI_Wait and %s every %d operations, MPI_Wait and MPI_Win_unlock%s\n",
+                            printf("MPI_Win_lock%s, iterate(%s from %d to %d, MPI_Wait and %s every %d operations), MPI_Wait and MPI_Win_unlock%s\n",
                                     (lock == LOCK_ONE)?"":"_all",
                                    (dir == DIR_GET)?"MPI_Rget":"MPI_Rput",
                                     origin,
@@ -456,7 +456,7 @@ int main(int argc, char *argv[])
                         if (rank == 0)
                         {
                             printf("Test %d\n", testnum);
-                            printf("MPI_Win_lock%s, %s from %d to %d, %s and MPI_Wait every %d operations, MPI_Win_unlock%s and MPI_Wait\n",
+                            printf("MPI_Win_lock%s, iterate(%s from %d to %d, %s and MPI_Wait every %d operations), MPI_Win_unlock%s and MPI_Wait\n",
                                     (lock == LOCK_ONE)?"":"_all",
                                    (dir == DIR_GET)?"MPI_Rget":"MPI_Rput",
                                     origin,
@@ -492,6 +492,49 @@ int main(int argc, char *argv[])
                         MPI_Barrier(MPI_COMM_WORLD);
                     }
                 }
+            }
+        }
+    }
+
+    /* Explicit requests,  (Lock, MPI_Rput|MPI_Rget, Unlock) x N, then complete all */
+    if ( test_sets[3] )
+    {
+        for ( LockType lock = 0; lock < NUM_LOCK_TYPES; ++lock)
+        {
+            for ( Direction dir = 0; dir < NUM_DIRS; ++dir)
+            {
+//                 LockType lock = LOCK_ALL;
+//                 Direction dir = DIR_GET;
+                ++testnum;
+                #if defined(VERBOSE)
+                if (rank == 0)
+                {
+                    printf("Test %d\n", testnum);
+                    printf("iterate(MPI_Win_lock%s, %s from %d to %d, MPI_Win_unlock%s), MPI_Wait\n",
+                            (lock == LOCK_ONE)?"":"_all",
+                            (dir == DIR_GET)?"MPI_Rget":"MPI_Rput",
+                            origin,
+                            target,
+                            (lock == LOCK_ONE)?"":"_all");
+                }
+                #endif
+                Buffers buffers = init_buffers(dir, origin, target, N, buf, winbuf);
+
+                if (rank == origin )
+                {
+                    MPI_Request requests[N];
+                    for ( int i = 0; i < N; ++i)
+                    {
+                        issue_lock(lock, target, window);
+                        issue_rma_req_op(dir, buf, i, target, window, &requests[i]);
+                        issue_unlock(lock, target, window);
+                    }
+                    if ( !wait_all_outstanding(N-1, -1, requests) ) { ++errors;}
+                    if ( !all_requests_completed(N, requests) ) {++errors;}
+                }
+                sync_target_with_origin(dir, target, origin);
+                if (!check_buffers(testnum, buffers)) {++errors;}
+                MPI_Barrier(MPI_COMM_WORLD);
             }
         }
     }
