@@ -28,7 +28,8 @@ noinst_PROGRAMS = \
     external32_derived_dtype \
     tst_fileview \
     zero_count \
-    split_coll
+    split_coll \
+    split_coll_iterate
 
 
 if BUILD_MPIX_TESTS

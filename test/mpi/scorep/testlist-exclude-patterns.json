@@ -61,7 +61,9 @@
     "list-entry": [
         "$^ Match the entire line in the testlist against these patterns:",
         "xfail=ticket\\d+", "$^ The xfail option is not honored by runtests if the --enable-strictmpi option was given to configure. These are tests that are expected to fail with MPICH.",
-        "resultTest=", "$^ Tests with the resultTest option are not supported in runtests --batch. Exclude them here to maintain consistent test counts."
+        "resultTest=", "$^ Tests with the resultTest option are not supported in runtests --batch. Exclude them here to maintain consistent test counts.",
+        "passive_completion \\d+ arg=3", "$^ This test is designed to trigger https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/142",
+        "passive_completion \\d+ arg=4", "$^ This test is designed to trigger https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/142"
     ],
     "source-name": [
         "$^ Match the name of each source file of the test against these patterns:"
