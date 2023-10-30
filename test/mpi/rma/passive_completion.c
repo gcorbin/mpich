@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include "mpitest.h"
 
- #define VERBOSE
+// #define VERBOSE
 
 enum Direction{
     DIR_PUT=0,
