@@ -32,5 +32,5 @@ scorep_compiler="scorep-${base_compiler}"
 
 # Disable all instrumentation except MPI and compiler
 # And run the scorep compiler wrapper
-SCOREP_WRAPPER_INSTRUMENTER_FLAGS='--nocuda --noopencl --noopenacc --noopenmp --nopdt --nopomp --nouser' \
+SCOREP_WRAPPER_INSTRUMENTER_FLAGS='--nocuda --noopencl --noopenacc --thread=none --nopomp --nouser' \
 exec ${scorep_compiler} "$@"
