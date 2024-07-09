@@ -197,12 +197,10 @@ C         the error fields are initialized for modification check.
 
           msg = MPI_MESSAGE_NULL
           call MPI_Improbe(0, 5, MPI_COMM_WORLD, found, msg, s1, ierr)
-          call MTestBeginExcludeFromTrace()
           do while (.not. found)
               call MPI_Improbe(0, 5, MPI_COMM_WORLD,
      .                          found, msg, s1, ierr)
           enddo
-          call MTestEndExcludeFromTrace()
           if (msg .eq. MPI_MESSAGE_NULL) then
               errs = errs + 1
               print *, 'msg == MPI_MESSAGE_NULL at T2 Improbe().'
@@ -273,12 +271,10 @@ C         the error fields are initialized for modification check.
 
           msg = MPI_MESSAGE_NULL
           call MPI_Improbe(0, 5, MPI_COMM_WORLD, found, msg, s1, ierr)
-          call MTestBeginExcludeFromTrace()
           do while (.not. found)
               call MPI_Improbe(0, 5, MPI_COMM_WORLD,
      .                          found, msg, s1, ierr)
           enddo
-          call MTestEndExcludeFromTrace()
           if (msg .eq. MPI_MESSAGE_NULL) then
               errs = errs + 1
               print *, 'msg == MPI_MESSAGE_NULL at T3 Improbe().'

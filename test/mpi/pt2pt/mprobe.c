@@ -141,15 +141,10 @@ int main(int argc, char **argv)
         s2.MPI_ERROR = MPI_ERR_TOPOLOGY;
 
         msg = MPI_MESSAGE_NULL;
-
-        check(msg == MPI_MESSAGE_NULL);
-        MPI_Improbe(0, 5, MPI_COMM_WORLD, &found, &msg, &s1);
-        MTestBeginExcludeFromTrace();
-        while (!found) {
+        do {
             check(msg == MPI_MESSAGE_NULL);
-            PMPI_Improbe(0, 5, MPI_COMM_WORLD, &found, &msg, &s1);
-        }
-        MTestEndExcludeFromTrace();
+            MPI_Improbe(0, 5, MPI_COMM_WORLD, &found, &msg, &s1);
+        } while (!found);
         check(msg != MPI_MESSAGE_NULL);
         check(s1.MPI_SOURCE == 0);
         check(s1.MPI_TAG == 5);
@@ -183,15 +178,10 @@ int main(int argc, char **argv)
         s2.MPI_ERROR = MPI_ERR_TOPOLOGY;
 
         msg = MPI_MESSAGE_NULL;
-        check(msg == MPI_MESSAGE_NULL);
-
-        MPI_Improbe(0, 5, MPI_COMM_WORLD, &found, &msg, &s1);
-        MTestBeginExcludeFromTrace();
-        while (!found) {
+        do {
             check(msg == MPI_MESSAGE_NULL);
-            PMPI_Improbe(0, 5, MPI_COMM_WORLD, &found, &msg, &s1);
-        }
-        MTestEndExcludeFromTrace();
+            MPI_Improbe(0, 5, MPI_COMM_WORLD, &found, &msg, &s1);
+        } while (!found);
         check(msg != MPI_MESSAGE_NULL);
         check(s1.MPI_SOURCE == 0);
         check(s1.MPI_TAG == 5);

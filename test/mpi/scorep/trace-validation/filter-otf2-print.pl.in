@@ -108,17 +108,26 @@ my $num_header_lines = @otf2_header;
 
 my $line_number = 0;
 my $exclude_region = 0;
+my $nondet_completion = 0;
+
+my @line_buf = ();
 while( my $line = <$input_stream> )
 {
     chomp($line);
     # The first few lines are a header
     # Check line by line if the input matches our expectations
-    if ( $line_number < $num_header_lines and not ( $line =~ $otf2_header[$line_number]) )
+    if ( $line_number < $num_header_lines )
     {
-        print STDERR "Invalid OTF2 header.
-Expected '$otf2_header[$line_number]',
-got '$line'\n";
-        exit($exit_err);
+        if ( not ( $line =~ $otf2_header[$line_number]) )
+        {
+            print STDERR "Invalid OTF2 header.
+    Expected '$otf2_header[$line_number]',
+    got '$line'\n";
+            exit($exit_err);
+        }
+        print $output_stream "$line\n";
+        $line_number = $line_number + 1;
+        next;
     }
 
 
@@ -150,7 +159,38 @@ got '$line'\n";
             # Also exclude this line:
             next;
         }
-
+        elsif ( $event eq 'ENTER' and $rest =~ /\s*Region:\s+"MPI_(Test|Iprobe|Improbe)"/i)
+        {
+            $nondet_completion=1;
+        }
+        elsif ( $event eq 'LEAVE' and $rest =~ /\s*Region:\s+"MPI_(Test|Iprobe|Improbe)"/i)
+        {
+            my $len = @line_buf;
+            if ( $len == 0 )
+            {
+                print STDERR "Got LEAVE event without an ENTER event";
+                exit($exit_err);
+            }
+            elsif ( $len == 1 )
+            {
+                # drop the ENTER event in the buffer
+                # and the current line containing the LEAVE event
+                @line_buf = ();
+                $nondet_completion = 0;
+                next;
+            }
+            else
+            {
+                # we got an non-empty region
+                # print out line buffer
+                foreach my $elem (@line_buf)
+                {
+                    print $output_stream "$elem\n";
+                }
+                @line_buf = ();
+                $nondet_completion=0;
+            }
+        }
     }
     else
     { # Some lines may not follow the format
@@ -166,7 +206,15 @@ got '$line'\n";
     # Anonymize all OTF2 defined numbers that are enclosed in angle brackets
     $line =~ s/(<\d+>)/<xxx>/g;
 
-    print $output_stream "$line\n";
+    if ( $nondet_completion )
+    {
+        push(@line_buf, $line);
+    }
+    else
+    {
+        print $output_stream "$line\n";
+    }
+
     $line_number = $line_number + 1;
 }
 
