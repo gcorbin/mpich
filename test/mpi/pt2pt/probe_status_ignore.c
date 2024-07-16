@@ -55,6 +55,13 @@ void init_buffers(int* sendbuf, int* recvbuf)
     recvbuf[1] = 0x0;
 }
 
+void init_status(MPI_Status* status)
+{
+    status->MPI_SOURCE=-1;
+    status->MPI_TAG=-1;
+    status->MPI_ERROR=MPI_SUCCESS;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -86,6 +93,7 @@ int main(int argc, char **argv)
 
     /* Test 0: MPI_Probe+MPI_Recv */
     init_buffers(sendbuf, recvbuf);
+    init_status(&status);
     if ( rank == 0 )
     {
         MPI_Send(sendbuf, 2, MPI_INT, receiver, tag, MPI_COMM_WORLD);
@@ -101,6 +109,7 @@ int main(int argc, char **argv)
 
     /* Test 1: MPI_Iprobe+MPI_Recv */
     init_buffers(sendbuf, recvbuf);
+    init_status(&status);
     if ( rank == 0 )
     {
         MPI_Send(sendbuf, 2, MPI_INT, receiver, tag, MPI_COMM_WORLD);
@@ -120,6 +129,7 @@ int main(int argc, char **argv)
 
     /* Test 2: MPI_Mprobe+MPI_Mrecv */
     init_buffers(sendbuf, recvbuf);
+    init_status(&status);
     if ( rank == 0 )
     {
         MPI_Send(sendbuf, 2, MPI_INT, receiver, tag, MPI_COMM_WORLD);
@@ -136,6 +146,7 @@ int main(int argc, char **argv)
 
     /* Test 3: MPI_Improbe+MPI_Mrecv */
     init_buffers(sendbuf, recvbuf);
+    init_status(&status);
     if ( rank == 0 )
     {
         MPI_Send(sendbuf, 2, MPI_INT, receiver, tag, MPI_COMM_WORLD);
