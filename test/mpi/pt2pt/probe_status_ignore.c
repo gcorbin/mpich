@@ -9,24 +9,30 @@
 #include "mpi.h"
 #include "mpitest.h"
 
+static int errs = 0;
+#define MAX_ASSERT_MESSAGE_LENGTH 256
+static char assert_message[MAX_ASSERT_MESSAGE_LENGTH];
+
+#define log_error(msg_) { ++errs; if( errs < 10 ) { fprintf(stderr, "check failed: (%s), line %d\n", msg_, __LINE__); } }
+
 /* assert-like macro that bumps the err count and emits a message */
-#define check(x_)                                                                 \
-    do {                                                                          \
-        if (!(x_)) {                                                              \
-            ++errs;                                                               \
-            if (errs < 10) {                                                      \
-                fprintf(stderr, "check failed: (%s), line %d\n", #x_, __LINE__); \
-            }                                                                     \
-        }                                                                         \
+#define check(x_) if (!(x_)) { log_error(#x_); }
+
+#define assert_int_equals(expected_, actual_, msg_) if (!(expected_ == actual_)) { \
+    snprintf(assert_message, MAX_ASSERT_MESSAGE_LENGTH, "%s: expected %d, got %d", msg_, expected_, actual_); \
+    log_error(assert_message); \
+}
+
+#define assert_status_equals(source_, tag_, error_, count_, type_, status_) \
+    do { \
+        assert_int_equals(source_, status_.MPI_SOURCE, "status source"); \
+        assert_int_equals(tag_, status_.MPI_TAG, "status tag"); \
+        assert_int_equals(error_, status_.MPI_ERROR, "status error"); \
+        int status_count_; \
+        MPI_Get_count(&status_, type_, &status_count_); \
+        assert_int_equals(count_, status_count_, "status count"); \
     } while (0)
 
-
-int status_equals(MPI_Status* status, int source, int tag, int error, int count, MPI_Datatype type)
-{
-    int status_count;
-    MPI_Get_count(status, type, &status_count);
-    return (status->MPI_SOURCE == source && status->MPI_TAG == tag && status->MPI_ERROR == error && status_count == count );
-}
 
 int buffer_equals(int N, int* expected, int* actual)
 {
@@ -52,7 +58,6 @@ void init_buffers(int* sendbuf, int* recvbuf)
 
 int main(int argc, char **argv)
 {
-    int errs = 0;
     int rank, size;
 
     MTest_Init(&argc, &argv);
@@ -90,7 +95,7 @@ int main(int argc, char **argv)
         MPI_Probe(sender, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         MPI_Recv(recvbuf, 2, MPI_INT, sender, tag, MPI_COMM_WORLD, &status);
-        check(status_equals(&status, sender, tag, MPI_SUCCESS, 2, MPI_INT));
+        assert_status_equals(sender, tag, MPI_SUCCESS, 2, MPI_INT, status);
         check(buffer_equals(2, sendbuf, recvbuf));
     }
 
@@ -109,7 +114,7 @@ int main(int argc, char **argv)
         }
 
         MPI_Recv(recvbuf, 2, MPI_INT, sender, tag, MPI_COMM_WORLD, &status);
-        check(status_equals(&status, sender, tag, MPI_SUCCESS, 2, MPI_INT));
+        assert_status_equals(sender, tag, MPI_SUCCESS, 2, MPI_INT, status);
         check(buffer_equals(2, sendbuf, recvbuf));
     }
 
@@ -125,7 +130,7 @@ int main(int argc, char **argv)
         MPI_Mprobe(sender, tag, MPI_COMM_WORLD, &message, MPI_STATUS_IGNORE);
 
         MPI_Mrecv(recvbuf, 2, MPI_INT, &message, &status);
-        check(status_equals(&status, sender, tag, MPI_SUCCESS, 2, MPI_INT));
+        assert_status_equals(sender, tag, MPI_SUCCESS, 2, MPI_INT, status);
         check(buffer_equals(2, sendbuf, recvbuf));
     }
 
@@ -146,7 +151,7 @@ int main(int argc, char **argv)
         }
 
         MPI_Mrecv(recvbuf, 2, MPI_INT, &message, &status);
-        check(status_equals(&status, sender, tag, MPI_SUCCESS, 2, MPI_INT));
+        assert_status_equals(sender, tag, MPI_SUCCESS, 2, MPI_INT, status);
         check(buffer_equals(2, sendbuf, recvbuf));
     }
 
