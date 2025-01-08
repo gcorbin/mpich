@@ -1,0 +1,95 @@
+# Exclude tests which are not supported by Score-P or trigger known issues
+
+# Tests matching at least one of the criteria in one of the categories below
+# will be excluded from the filtered testlist. For each category, a list of
+# regex patterns (python syntax) can be supplied as exclude criteria.
+
+# Match the path of the test executable relative to the top test directory against these patterns:
+exe-name:
+    # Tests in ./errors can be incorrect MPI programs.
+    # In some cases this results in critical errors in Score-P (e.g. invalid memory)
+    - ^./errors/comm/ccreate1$
+    - ^./errors/comm/cfree$
+    - ^./errors/comm/comm_group_nullarg$
+    - ^./errors/comm/comm_create_group_nullarg$
+    - ^./errors/comm/comm_create_nullarg$
+    - ^./errors/comm/comm_split_nullarg$
+    - ^./errors/comm/comm_split_type_nullarg$
+    - ^./errors/comm/intercomm_create_nullarg$
+    - ^./errors/comm/too_many_i?comms\d?$
+    - ^./errors/f77/io/uerrhandf$
+    - ^./errors/f90/io/uerrhandf90$
+    - ^./errors/group/group_difference_nullarg$
+    - ^./errors/group/group_intersection_nullarg$
+    - ^./errors/group/group_range_excl_nullarg$
+    - ^./errors/group/group_range_incl_nullarg$
+    - ^./errors/group/group_union_nullarg$
+    - ^./errors/rma/winerr\d?$
+    - ^./errors/rma/win_sync_complete$
+    - ^./errors/rma/win_sync_free_at$
+    - ^./errors/rma/win_sync_free_pt$
+    - ^./errors/rma/win_sync_op$
+    - ^./errors/spawn/unpub$
+    - ^./errors/spawn/lookup_name$
+    # See issue https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/139
+    - ^./comm/comm_idup_overlap$
+    # See issue https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/140
+    - ^./pt2pt/send_datatype_null$
+    - ^./part/nonblocking_pready$
+    # See issue https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/141
+    - ^./f77/attr/
+    - ^./f77/rma/winattrf$
+    - ^./f77/rma/winattr2f$
+    - ^./f90/attr/
+    - ^./f90/rma/winattrf90$
+    - ^./f90/rma/winattr2f90$
+    # See issue https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/142
+    - ^./rma/reqops$
+    - ^./rma/rget_unlock$
+    - ^./rma/rmazero$
+    # See issue https://gitlab.jsc.fz-juelich.de/perftools/otf2/-/issues/21
+    - ^./comm/ctxalloc$
+    # The following bugs are considered low priority and don't have their own issue
+    # See the general issue https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/122
+    - ^./f77/info/infotest2f$
+    - ^./f90/info/infotest2f90$
+    - ^./f77/info/infogetstrf$
+    - ^./f90/info/infogetstrf90$
+    - ^./f77/pt2pt/greqf$
+    - ^./f90/pt2pt/greqf90$
+    # The following tests depend on MPI_Finalize freeing attributes on communicators.
+    # The Score-P wrapper for MPI_Finalize does not call the real MPI_Finalize and does not free attributes.
+    # In practice this does not matter, fixing this issue has very low priority
+    # See the general issue https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/122
+    - ^./attr/attrend$
+    - ^./attr/attrend2$
+    - ^./init/attrself$
+    # The Fortran 2008 interface is not supported by Score-P
+    - ^./f08/
+
+# Match the entire line in the testlist against these patterns
+list-entry:
+    # The xfail option is not honored by runtests if the --enable-strictmpi option was given to configure. These are tests that are expected to fail with MPICH.
+    - xfail=ticket\d+
+    # Tests with the resultTest option are not supported in runtests --batch. Exclude them here to maintain consistent test counts.
+    - resultTest=
+    # These tests are designed to trigger https://gitlab.jsc.fz-juelich.de/perftools/scorep/-/issues/142,
+    - passive_completion \d+ arg=3
+    - passive_completion \d+ arg=4
+
+# Match the name of each source file of the test against these patterns
+source-name: []
+
+# Match each line of each source file of the test against these patterns
+source-contents:
+    - (?i)MPI_Comm_spawn
+    - (?i)MPI_Comm_join
+    - (?i)MPI_Intercomm_create_from_groups
+    # Score-P does not support MPI_Session.
+    - (?i)MPI_Session
+    # Not supported, will result in untracked communicators
+    - (?i)MPI_Comm_idup_with_info
+    # $^ Partitioned communication is not supported
+    - (?i)MPI_Pready
+    - (?i)MPI_Psend
+    - (?i)MPI_Precv
