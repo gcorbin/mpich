@@ -52,6 +52,9 @@ use Time::HiRes qw(gettimeofday tv_interval);
 use Fcntl qw(:flock);
 
 use Cwd;
+use File::Spec qw(splitpath);
+use Digest::MD5 qw(md5_hex);
+
 my $g_cwd = getcwd();
 
 my $g_topsrcdir = ".";
@@ -60,6 +63,17 @@ if ($0 =~ /(.*)\/runtests$/) {
 }
 
 my $g_starttime = time();
+
+# Absolute path and file name of this script
+my $abs_program_path = Cwd::abs_path(__FILE__);
+my $program_dir;
+my $program_name;
+($_, $program_dir, $program_name) = File::Spec->splitpath($abs_program_path);
+$program_dir = File::Spec->canonpath($program_dir);
+
+# Paths for the Score-P functionality
+my $scorep_filter_file="$program_dir/scorep/only-mtest.filter";
+my $otf2_diff="$program_dir/scorep/trace-validation/diff-otf2.pl";
 
 # Global variables
 my %g_opt;   # global options. TODO: migrate global option vars into the hash
@@ -99,6 +113,7 @@ $g_opt{batchRun} = 0;           # Set to true to batch the execution of the test
                                 # (i.e., run them together, then test output, 
                                 # rather than build/run/check for each test)
 $g_opt{batrundir} = ".";        # Set to the directory into which to run the examples
+$g_opt{batchHeaderFile} = "";   # File name of header to prepend to batch scripts
 $g_opt{srcdir} = ".";           # Used to set the source dir for testlist files
 $g_opt{stopfile} = ".stopfile"; # Touch this file to abort the testing
 
@@ -112,6 +127,8 @@ $g_opt{tapfile} = '';
 
 # Junit format output
 $g_opt{junitfile} = '';
+
+$g_opt{scorep_mode} = "quiet";  # Determines the operation mode for scorep
 
 my $xmloutput;
 my $tapoutput;
@@ -237,6 +254,7 @@ foreach $_ (@ARGV) {
     elsif (/--?showprogress/) { $g_opt{showprogress} = 1; }
     elsif (/--?debug/) { $g_opt{debug} = 1; }
     elsif (/--?batchdir=(.*)/) { $g_opt{batrundir} = $1; }
+    elsif (/--?batchheader=(.*)/) { $g_opt{batchHeaderFile} = $1; }
     elsif (/--?batch/) { $g_opt{batchRun} = 1; }
     elsif (/--?timeoutarg=(.*)/) { $g_opt{timeoutarg} = $1; }
     elsif (/--?strict/) { $g_opt{strict} = 1; }
@@ -256,6 +274,12 @@ foreach $_ (@ARGV) {
         $g_opt{junitfile} = $1;
         $junitoutput = 1;
     }
+    elsif (/--?scorep_mode=(.*)/) {
+        $g_opt{scorep_mode} = $1;
+        if ($g_opt{scorep_mode} !~ m/(off|quiet|profile|trace|trace_diff|trace_make_ref)/) {
+            die "Invalid value for argument scorep_mode:  $g_opt{scorep_mode}. Set to one of 'off', 'quiet', 'profile', 'trace', 'trace_diff', 'trace_make_ref'\n";
+        }
+    }
     else {
         print STDERR "Unrecognized argument $_\n";
         print STDERR "runtests [-tests=testfile] [-testdirs=dirs] [-np=nprocesses] \
@@ -263,7 +287,8 @@ foreach $_ (@ARGV) {
         [-ppn=max-proc-per-node] [-ppnarg=string] \
         [-timelimitarg=string] [-xmlfile=filename ] [-tapfile=filename ] \
         [-junitfile=filename ] [-noxmlclose] \
-        [-verbose] [-showprogress] [-debug] [-batch]\n";
+        [-verbose] [-showprogress] [-debug] [-batch] [-batchheader] \
+        [-scorep_mode=mode]\n";
         exit(1);
     }
 }
@@ -278,10 +303,25 @@ $g_opt{srcdir} = Cwd::abs_path($g_opt{srcdir});
 $g_opt{stopfile} = Cwd::abs_path($g_opt{stopfile});
 
 if ($g_opt{batchRun}) {
+    $g_opt{batrundir} = Cwd::abs_path($g_opt{batrundir});
     if (! -d $g_opt{batrundir}) {
         mkpath $g_opt{batrundir} || die "Could not create $g_opt{batrundir}\n";
     }
     open( BATOUT, ">$g_opt{batrundir}/runtests.batch" ) || die "Could not open $g_opt{batrundir}/runtests.batch\n";
+    # Optionally write header to the batch file
+    if ($g_opt{batchHeaderFile} ne "")
+    {
+        if (! -f $g_opt{batchHeaderFile}) {
+            print STDERR "The header file $g_opt{batchHeaderFile} does not exist.\n";
+            exit(1);
+        }
+        open( BATHEADER, "<$g_opt{batchHeaderFile}" ) || die "Could not open $g_opt{batchHeaderFile}\n";
+        while (<BATHEADER>)
+        {
+            print BATOUT "$_";
+        }
+        close (BATHEADER );
+    }
 }
 
 OpenOutputs();
@@ -345,6 +385,16 @@ else {
 # ---------------------------------------------------------------------------
 # Routines
 # 
+
+# Name for a trace of a given test program with argument string
+sub ReferenceTraceName {
+    my $args_str = join(' ', @_);
+    $args_str =~ s/[\s\W]/_/g;
+
+    return "reference\_$args_str";
+}
+
+
 # Load tests listed in the file given as the argument. 
 # This file describes the tests in the format
 #  programname number-of-processes [ key=value ... ]
@@ -447,6 +497,26 @@ sub LoadTests {
                 }
             }
 
+            if ($g_opt{scorep_mode} ne "off") {
+                push @{$test_opt->{envs}}, "SCOREP_OVERWRITE_EXPERIMENT_DIRECTORY=1";
+                push @{$test_opt->{envs}}, "SCOREP_EXPERIMENT_DIRECTORY=scorep_last_run";
+                push @{$test_opt->{envs}}, "SCOREP_FILTERING_FILE=$scorep_filter_file";
+                push @{$test_opt->{envs}}, "SCOREP_MPI_ENABLE_GROUPS=ALL";
+
+                if ($g_opt{scorep_mode} eq "quiet") {
+                    push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=false";
+                    push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=false";
+                }
+                elsif ($g_opt{scorep_mode} eq "profile") {
+                    push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=true";
+                    push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=false";
+                }
+                else { # trace[_diff|_make_ref]
+                    push @{$test_opt->{envs}}, "SCOREP_ENABLE_PROFILING=false";
+                    push @{$test_opt->{envs}}, "SCOREP_ENABLE_TRACING=true";
+                }
+            }
+
             # Set a default timeout on tests (3 minutes for now)
             my $timeout = $g_opt{defaultTimeLimit};
             if (defined($test_opt->{timeLimit}) && $test_opt->{timeLimit} =~ /^\d+$/) {
@@ -487,6 +557,37 @@ sub LoadTests {
                 SkippedTest($test_opt, "xfail tests disabled");
                 next;
             }
+
+            # Conditions for skipping tests in context of different scorep_mode
+            my $has_reference_trace = 0;
+            if ($g_opt{scorep_mode} eq "trace_make_ref" && defined $test_opt->{resultTest})
+            {
+                SkippedTest($test_opt, "Reference traces are not supported for tests with the resultTest option.");
+                next;
+            }
+
+            if ($g_opt{scorep_mode} eq "trace_diff" || $g_opt{scorep_mode} eq "trace_make_ref")
+            {
+                my $reference_trace = ReferenceTraceName(@args);
+                my $reference_trace_path = "$test_opt->{dir}/$reference_trace";
+                $test_opt->{reference_trace}=$reference_trace;
+                if (-d $reference_trace_path && -f "$reference_trace_path/traces.otf2")
+                {
+                    $has_reference_trace = 1;
+                }
+                if ($g_opt{scorep_mode} eq "trace_diff" && !$has_reference_trace)
+                {
+                    SkippedTest($test_opt, "Could not find the specified reference trace $reference_trace_path");
+                    next;
+                }
+            }
+
+            if ($g_opt{scorep_mode} eq "trace_make_ref" && $has_reference_trace )
+            {
+                    SkippedTest($test_opt, "Generating missing traces: this test already has a reference trace");
+                    next;
+            }
+
 
             push @$all_tests, $test_opt;
         }
@@ -679,6 +780,11 @@ sub RunMPIProgram {
 
     unlink "err";
 
+    if ( $g_opt{scorep_mode} ne "off" && -d "scorep_last_run" )
+    {
+        `rm -rf scorep_last_run`;
+    }
+
     $ENV{"MPIEXEC_TIMEOUT"} = $test_opt->{_timeout};
 
     # Run the optional setup routine. For example, the timeout tests could
@@ -753,6 +859,73 @@ sub RunMPIProgram {
         relese_lock($lockfile);
     }
 
+    # Make sure that the profile or trace files exist
+    if ( $g_opt{scorep_mode} eq "profile" and not (-f "scorep_last_run/profile.cubex") )
+    {
+        $found_error = 1;
+        $inline = "Profile file does not exist for this test";
+        goto EVALUATE;
+    }
+    if ( $g_opt{scorep_mode} =~ /(trace|trace_diff|trace_make_ref)/ and not (-f "scorep_last_run/traces.otf2") )
+    {
+        $found_error = 1;
+        $inline = "Trace file does not exist for this test";
+        goto EVALUATE;
+    }
+    if (defined $test_opt->{reference_trace})
+    {
+        my $reference_trace = $test_opt->{reference_trace};
+        if ($g_opt{scorep_mode} eq "trace_diff")
+        {
+            print STDOUT "Validating 'scorep_last_run' against '$reference_trace'\n" if $g_opt{verbose};
+            system( "$otf2_diff scorep_last_run/traces.otf2 $reference_trace/traces.otf2 1>$reference_trace.diff" );
+            my $rc = ($? >> 8);
+
+            if ($rc == 0)
+            {
+                # All good
+                # We do not need the diff file since it is empty in this case
+                unlink "$reference_trace.diff";
+            }
+            elsif ($rc == 1)
+            {
+                $found_error = 1;
+                $inline = "The trace of this test differs from its reference '$reference_trace'. Differences are listed in $reference_trace.diff";
+                goto EVALUATE;
+            }
+            else # error
+            {
+                $found_error = 1;
+                $inline = "There was an error in the comparison of traces: $rc";
+                goto EVALUATE;
+            }
+        }
+        elsif ($g_opt{scorep_mode} eq "trace_make_ref")
+        {
+            if (-d $reference_trace)
+            {
+                system( "rm -rf $reference_trace" );
+                my $rc = ($? >> 8);
+                if ($rc != 0)
+                {
+                    $found_error = 1;
+                    $inline = "Could not delete the old reference trace $reference_trace: rm exited with status $rc";
+                    goto EVALUATE;
+                }
+            }
+            system ( "cp -r scorep_last_run $reference_trace" );
+            my $rc = ($? >> 8);
+            if ($rc != 0)
+            {
+                $found_error = 1;
+                $inline = "Failed to generate the new reference trace. cp exited with status $rc";
+                goto EVALUATE;
+            }
+            print STDOUT "Generated reference trace $reference_trace\n" if $g_opt{verbose};
+        }
+    }
+
+EVALUATE:
     if ($found_error) {
         &RunTestFailed($test_opt, $inline, $runtime );
     } elsif ($inline =~ /Test Skipped/) {
@@ -792,29 +965,33 @@ sub AddMPIProgram {
         $test_opt->{init}->();
     }
 
+    # To avoid conflict between same program names in different subdirectories,
+    # prepend the executable name in the batch directory by the path to the current subdirectory
+    # where the leading './' is removed and '/' is replaced by '-'.
+    my $programname_batch = "$curdir/$programname";
+    $programname_batch =~ s,^\./,,;
+    $programname_batch =~ s,/,-,g;
+
     my $wrapper = get_mpiexec_wrapper($np, $test_opt);
     my $progArgs = join(' ', @{$test_opt->{args}});
-    my $cmd = "$wrapper ./$programname $progArgs";
+    my $cmd = "$wrapper ./$programname_batch $progArgs";
     my $progEnv = join(' ', @{$test_opt->{envs}});
     print STDOUT "Env includes $progEnv\n" if $g_opt{verbose};
     print STDOUT "$cmd\n" if $g_opt{verbose};
     print STDOUT "." if $g_opt{showprogress};
-    # Save and restore the environment if necessary before running mpiexec.
-    if ($progEnv ne "") {
-        # Need to fix: 
-        # save_NAME_is_set=is old name set
-        # save_NAME=oldValue
-        # export NAME=newvalue
-        # (run) 
-        # export NAME=oldValue (if set!)
-        print STDERR "Batch output does not permit changes to environment\n";
-    }
     # The approach here is to move the test codes to a single directory from
     # which they can be run; this avoids complex code to change directories
     # and ensure that the output goes "into the right place".
     $g_testCount++;
-    mv($programname, "$g_opt{batrundir}/$programname");
+    mv($programname, "$g_opt{batrundir}/$programname_batch");
     print BATOUT "echo \"# $cmd\" > runtests.$g_testCount.out\n";
+    if ($g_opt{scorep_mode} ne "off") {
+        print BATOUT "if [ -d 'scorep_last_run' ]; then rm -rf 'scorep_last_run'; fi\n";
+    }
+    if ($progEnv ne "")
+    {
+        print BATOUT "$progEnv \\\n";
+    }
     # Some programs expect to run in the same directory as the executable
     print BATOUT "$cmd >> runtests.$g_testCount.out 2>&1\n";
     print BATOUT "echo \$? > runtests.$g_testCount.status\n";
@@ -964,6 +1141,26 @@ sub check_result {
         }
         elsif (/^srun: error: .*: signal: Communication connection failure/) {
             # skip
+        }
+        elsif (  /^(\s*\[Score-P\].*?Warning:\s+)?rank\[\d+\]:\s+frequency\s+=/
+		      || /^(\s*\[Score-P\].*?Warning:\s+)?Calculated timer\s+\(.*?\)\s+frequencies differ from average frequency/ )
+        {
+            #skip
+        }
+        elsif (/^\s*\[Score-P\].*?Warning:\s*MPI environment initialization request and provided level exceed MPI_THREAD_FUNNELED!/)
+        {
+            #skip
+        }
+        elsif (/^\s*\[Score-P\].*?Warning:\s*Support for MPI_THREAD_\(SERIALIZED|MULTIPLE\) is currently experimental!/)
+        {
+            #skip
+        }
+        elsif (/^\s*Please report bugs and give feedback to support\@score-p\.org\./)
+        {
+            #skip
+        }
+        elsif (/^$/) {
+			#skip
         }
         else {
             $stray_output++;

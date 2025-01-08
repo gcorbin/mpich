@@ -1,0 +1,11 @@
+# Exclude all tests that produce nondeterministic traces
+
+exe-name:
+    - ^./rma/wintest$
+    - ^./rma/req_example$
+    - ^./rma/linked_list$
+    - ^./rma/mutex_bench$
+
+source-contents:
+    - (?i)MPI_Test(all|any|some)?
+    - (?i)MPI_Wait(any|some)

@@ -1,0 +1,30 @@
+# Exclude all tests that don't run on the swat test cluster
+
+exe-name:
+    - ^./errors/coll/allgatherlength$
+    - ^./errors/coll/allreducelength$
+    - ^./errors/coll/alltoalllength$
+    - ^./errors/coll/gatherlength$
+    - ^./errors/coll/iallgatherlength$
+    - ^./errors/coll/iallreducelength$
+    - ^./errors/coll/igatherlength$
+    - ^./errors/coll/ireducelength$
+    - ^./errors/coll/ireduceop$
+    - ^./errors/coll/iscatterlength$
+    - ^./errors/coll/reducelength$
+    - ^./errors/coll/reduceop$
+    - ^./errors/coll/scatterlength$
+
+list-entry:
+    # These tests try to read a coordinates file in the same folder as the executable, which does not work in batch mode
+    - env=MPIR_CVAR_COORDINATES_FILE
+    # This test uses too many processes
+    - ^darray_pack 72
+    # This test uses too many processes
+    - ^ic2 33$
+    # These tests use too many processes
+    - ^bcasttest 32
+
+source-contents:
+    # Not supported with UCX which is running on the cluster
+    - (?i)MPI_Open_port
