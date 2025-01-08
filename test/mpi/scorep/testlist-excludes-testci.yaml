@@ -1,0 +1,4 @@
+# Exclude all but a few tests for faster testing of the CI
+
+exe-name:
+    - ^(?!(./pt2pt/sendrecv2|./coll/p_bcast))
