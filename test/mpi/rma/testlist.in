@@ -205,3 +205,8 @@ win_shared_query_null 4
 ## out till be find a better way to test the original problem with
 ## MPI_Test.
 # nb_test 2
+
+passive_completion 2 arg=1
+passive_completion 2 arg=2
+passive_completion 2 arg=3
+passive_completion 2 arg=4
