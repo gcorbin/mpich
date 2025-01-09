@@ -74,7 +74,9 @@ noinst_PROGRAMS =  \
     mprobe_self_free \
     pssend \
     pipeline \
-    send_datatype_null
+    send_datatype_null \
+    probe_status_ignore \
+    probe_wildcard
 
 irecv_any_CPPFLAGS = -DTEST_NB $(AM_CPPFLAGS)
 irecv_any_SOURCES  = recv_any.c

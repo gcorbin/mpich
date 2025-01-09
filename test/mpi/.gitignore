@@ -1363,6 +1363,8 @@ testlist.filtered
 /pt2pt/waitany_null
 /pt2pt/waittestnull
 /pt2pt/send_datatype_null
+/pt2pt/probe_status_ignore
+/pt2pt/probe_wildcard
 /rma/accfence1
 /rma/accfence2
 /rma/accfence2_am

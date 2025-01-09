@@ -80,3 +80,5 @@ mprobe_self_free 1
 pssend 2
 # Expose a bug in the Score-P pt2pt wrappers, where MPI_Type_size called with MPI_DATATYPE_NULL fails
 send_datatype_null 2
+probe_status_ignore 2
+probe_wildcard 2
