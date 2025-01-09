@@ -1332,6 +1332,7 @@ testlist.filtered
 /pt2pt/testlist.gpu
 /pt2pt/waitany_null
 /pt2pt/waittestnull
+/pt2pt/send_datatype_null
 /rma/accfence1
 /rma/accfence2
 /rma/accfence2_am
