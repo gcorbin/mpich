@@ -1248,6 +1248,8 @@ testlist.filtered
 /io/tst_fileview
 /io/userioerr
 /io/zero_count
+/io/split_coll
+/io/split_coll_iterate
 /maint/f77tof90
 /maint/testmerge
 /maint/updatefiles
