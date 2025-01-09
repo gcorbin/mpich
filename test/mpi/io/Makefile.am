@@ -32,7 +32,9 @@ noinst_PROGRAMS = \
     zero_count \
     large_count \
     large_dtype \
-    striped_hints
+    striped_hints \
+    split_coll \
+    split_coll_iterate
 
 
 if BUILD_MPIX_TESTS
