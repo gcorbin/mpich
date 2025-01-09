@@ -73,7 +73,8 @@ noinst_PROGRAMS =  \
     precv_anysrc_exp \
     mprobe_self_free \
     pssend \
-    pipeline
+    pipeline \
+    send_datatype_null
 
 irecv_any_CPPFLAGS = -DTEST_NB $(AM_CPPFLAGS)
 irecv_any_SOURCES  = recv_any.c
