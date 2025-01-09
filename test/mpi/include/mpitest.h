@@ -33,6 +33,7 @@ extern int usleep(useconds_t);
 void MTest_Init(int *, char ***);
 void MTest_Init_thread(int *, char ***, int, int *);
 void MTest_Finalize(int);
+void MTest_Finalize_PMPI(int);
 void MTestPrintError(int);
 void MTestPrintErrorMsg(const char[], int);
 void MTestPrintfMsg(int, const char[], ...);

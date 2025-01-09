@@ -214,6 +214,43 @@ void MTest_Finalize(int errs)
     MTest_finalize_gpu();
 }
 
+/* Same as MTest_Finalize, but use PMPI_Reduce instead of reduce.
+ * Useful to hide communication in Finalize from measurement tools */
+void MTest_Finalize_PMPI(int errs)
+{
+    int rank, toterrs, merr;
+
+    merr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (merr)
+        MTestPrintError(merr);
+
+    merr = PMPI_Reduce(&errs, &toterrs, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (merr)
+        MTestPrintError(merr);
+    if (rank == 0) {
+        if (toterrs) {
+            printf(" Found %d errors\n", toterrs);
+        } else {
+            printf(" No Errors\n");
+        }
+        fflush(stdout);
+    }
+
+    if (usageOutput)
+        MTestResourceSummary(stdout);
+
+    /* Clean up any comms from MTestCommRandomize() */
+    MTestCommRandomize_cleanup();
+
+    /* Clean up any persistent objects that we allocated */
+    MTestRMACleanup();
+
+    MPI_Finalize();
+
+    MTest_finalize_thread_pkg();
+    MTest_finalize_gpu();
+}
+
 /* ------------------------------------------------------------------------ */
 /* This routine may be used instead of "return 0;" at the end of main;
    it allows the program to use the return value to signal success or failure.
