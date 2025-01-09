@@ -203,7 +203,8 @@ noinst_PROGRAMS =          \
     lockall_dt_flushlocal  \
     lockall_dt_flushlocalall \
     putfence1              \
-    putpscw1
+    putpscw1 \
+    passive_completion
 
 if BUILD_MPIX_TESTS
 noinst_PROGRAMS += aint   \

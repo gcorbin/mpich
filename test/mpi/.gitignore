@@ -1561,6 +1561,7 @@ testlist.filtered
 /rma/wintest
 /rma/wintest_shm
 /rma/win_zero
+/rma/passive_completion
 /spawn/concurrent_spawns
 /spawn/disconnect
 /spawn/disconnect2
