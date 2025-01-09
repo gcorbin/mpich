@@ -8,7 +8,7 @@ sendrecv2 2 env=MPIR_CVAR_CH4_OFI_ENABLE_MULTI_NIC_HASHING=1 env=MPIR_CVAR_CH4_O
 sendrecv2 2 env=MPIR_CVAR_CH4_OFI_ENABLE_MULTI_NIC_HASHING=1 env=MPIR_CVAR_CH4_OFI_ENABLE_MULTI_NIC_STRIPING=1
 sendrecv3 2
 sendrecv3 2 arg=-isendrecv
-sendflood 8
+sendflood 8 env=SCOREP_TOTAL_MEMORY=81MB
 sendall 4
 anyall 2
 eagerdt 2
