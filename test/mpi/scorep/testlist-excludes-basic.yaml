@@ -64,8 +64,6 @@ exe-name:
     - ^./attr/attrend$
     - ^./attr/attrend2$
     - ^./init/attrself$
-    # The Fortran 2008 interface is not supported by Score-P
-    - ^./f08/
 
 # Match the entire line in the testlist against these patterns
 list-entry:
