@@ -141,5 +141,4 @@ endif
 
 call MTEST_FINALIZE(errs)
 
-stop
 end
