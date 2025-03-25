@@ -14,6 +14,8 @@ exe-name:
     - ^./errors/coll/reducelength$
     - ^./errors/coll/reduceop$
     - ^./errors/coll/scatterlength$
+    # MPICH 4.2.2 does not provide 'MPI_Status_f082f'. Fixed in 4.2.3
+    - ^./f08/misc/statusconv$
 
 list-entry:
     # These tests try to read a coordinates file in the same folder as the executable, which does not work in batch mode
