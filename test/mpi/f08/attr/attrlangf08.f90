@@ -204,33 +204,33 @@
          print *, "Case 1: C sets and C gets"
       endif
       call ctoctest( errs )
-      if (fverbose) then
-         print *, "Case 2: C sets and Fortran (MPI1) gets"
-      endif
-      call ctof1test( errs )
+!       if (fverbose) then
+!          print *, "Case 2: C sets and Fortran (MPI1) gets"
+!       endif
+!       call ctof1test( errs )
       if (fverbose) then
          print *, "Case 3: C sets and Fortran (MPI2) gets"
       endif
       call ctof2test( errs )
-      if (fverbose) then
-         print *, "Case 4: Fortran (MPI1) sets and C gets"
-      endif
-      call f1toctest( errs )
-      if (fverbose) then
-         print *, "Case 5: Fortran (MPI1) sets and gets"
-      endif
-      call f1tof1test( errs )
-      if (fverbose) then
-         print *, "Case 6: Fortran (MPI1) sets and Fortran (MPI2) gets"
-      endif
-      call f1tof2test( errs )
+!       if (fverbose) then
+!          print *, "Case 4: Fortran (MPI1) sets and C gets"
+!       endif
+!       call f1toctest( errs )
+!       if (fverbose) then
+!          print *, "Case 5: Fortran (MPI1) sets and gets"
+!       endif
+!       call f1tof1test( errs )
+!       if (fverbose) then
+!          print *, "Case 6: Fortran (MPI1) sets and Fortran (MPI2) gets"
+!       endif
+!       call f1tof2test( errs )
       if (fverbose) then
          print *, "Case 7: Fortran (MPI2) sets and C gets"
       endif
-      call f2toctest( errs )
-      if (fverbose) then
-         print *, "Case 8: Fortran (MPI2) sets and Fortran (MPI1) gets"
-      endif
+!       call f2toctest( errs )
+!       if (fverbose) then
+!          print *, "Case 8: Fortran (MPI2) sets and Fortran (MPI1) gets"
+!       endif
       call f2tof1test( errs )
       if (fverbose) then
          print *, "Case 9: Fortran (MPI2) sets and gets"

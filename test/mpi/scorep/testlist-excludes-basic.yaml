@@ -64,6 +64,8 @@ exe-name:
     - ^./attr/attrend$
     - ^./attr/attrend2$
     - ^./init/attrself$
+    # The F08 wrappers do not support deprecated MPI-1 attribute functions.
+    - ^./f08/attr/attrmpi1f08$
 
 # Match the entire line in the testlist against these patterns
 list-entry:
