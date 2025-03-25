@@ -15,7 +15,11 @@
       integer ierr, errs, fcomm2_keyval, ftype2_keyval
       integer ccomm2_keyval, ctype2_keyval, cwin2_keyval
       integer callcount, delcount
-      integer (kind=MPI_ADDRESS_KIND) commextra, typeextra
+      !
+      ! Add the SAVE attribute as a workaround for Score-P's delayed
+      ! call to MPI_Finalize
+      !
+      integer (kind=MPI_ADDRESS_KIND), save :: commextra, typeextra
       common /myattr/ callcount, delcount
       external mycopyfn, mydelfn, mytcopyfn, mytdelfn
 

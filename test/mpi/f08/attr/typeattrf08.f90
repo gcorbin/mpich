@@ -8,7 +8,12 @@
       program main
       use mpi_f08
       integer errs, ierr
-      integer (kind=MPI_ADDRESS_KIND) extrastate, valin, valout, val
+      integer (kind=MPI_ADDRESS_KIND) valin, valout, val
+      !
+      ! Add the SAVE attribute as a workaround for Score-P's delayed
+      ! call to MPI_Finalize
+      !
+      integer(kind=MPI_ADDRESS_KIND), save :: extrastate
 
       TYPE(MPI_Comm) comm
       TYPE(MPI_Datatype) type1, type2
