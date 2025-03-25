@@ -1,10 +1,10 @@
 iwriteatf90 4
 iwritef90 4
-iwriteshf90 4
+iwriteshf90 4 timeLimit=500
 writef90 4
 writeatf90 4
 writeallf90 4
-writeshf90 4
+writeshf90 4 timeLimit=500
 writeordf90 4
 writeatallf90 4
 writeatallbef90 4
