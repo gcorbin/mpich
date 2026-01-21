@@ -1,0 +1,6 @@
+# Addressed by MR !700
+not ok 606 - ./io/rdwrzero 4 # time=1.02879190444946
+not ok 7 - ./f77/io/writeshf 4 # time=1.44134187698364
+not ok 15 - ./f77/io/shpositionf 4 # time=0.208062887191772
+not ok 7 - ./f90/io/writeshf90 4 # time=1.41443395614624
+not ok 15 - ./f90/io/shpositionf90 4 # time=0.244415044784546
