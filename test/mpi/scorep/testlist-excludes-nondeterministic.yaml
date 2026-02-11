@@ -1,10 +1,18 @@
 # Exclude all tests that produce nondeterministic traces
 
 exe-name:
-    - ^./rma/wintest$
+    - ^./pt2pt/icprobe$
+    - ^./pt2pt/probe_unexp$
+    - ^./pt2pt/many_isend$
+    - ^./rma/wintest(_shm)?$
     - ^./rma/req_example$
-    - ^./rma/linked_list$
-    - ^./rma/mutex_bench$
+    - ^./rma/reqops$
+    - ^./rma/linked_list
+    - ^./rma/mutex_bench
+    - ^./f77/rma/winscale2f$
+    - ^./f90/rma/winscale2f90$
+    - ^./f08/rma/winscale2f08$
+
 
 source-contents:
     - (?i)MPI_Test(all|any|some)?
