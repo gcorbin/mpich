@@ -11,6 +11,7 @@ EXTRA_DIST = testlist
 ## file, we don't need per-target _SOURCES rules, automake will infer them
 ## correctly
 noinst_PROGRAMS =  \
+    all_probe_sequences \
     anyall         \
     bottom         \
     bsend1         \

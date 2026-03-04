@@ -1,3 +1,4 @@
+all_probe_sequences 2
 sendself 1 arg=-type=MPI_C_DOUBLE_COMPLEX arg=-sendcnt=8192 arg=-recvcnt=8192 arg=-seed=47 arg=-testsize=100
 sendself 2 arg=-type=MPI_C_DOUBLE_COMPLEX arg=-sendcnt=8192 arg=-recvcnt=8192 arg=-seed=47 arg=-testsize=100
 sendrecv2 2
